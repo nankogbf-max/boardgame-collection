@@ -1,0 +1,27 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Netlify Functionsのランタイム設定
+[functions]
+  node_bundler = "esbuild"
+
+# セキュリティヘッダー（全ページ共通）
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# HTMLファイルはキャッシュしない（更新をすぐ反映するため）
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+# Function のレスポンスはNetlify CDNにキャッシュさせる
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

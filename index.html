@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ボードゲームコレクション</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6f3;--surface:#fff;--surface2:#f1f0ec;
+  --border:rgba(55,53,47,.12);--border-hover:rgba(55,53,47,.22);
+  --text:#37352f;--text-muted:#6b6b6b;--text-faint:#9b9a97;
+  --accent:#2eaadc;--accent-bg:#e8f4fb;
+  --tag-bg-bg:#e8f4ec;--tag-text-bg:#0f6e3d;
+  --tag-bg-party:#fdf3e3;--tag-text-party:#8a5600;
+  --tag-bg-mm:#fce8e8;--tag-text-mm:#9b1c1c;
+  --diff-light-bg:#e8f5e9;--diff-light-c:#1b5e20;
+  --diff-mid-bg:#fff8e1;--diff-mid-c:#7c5500;
+  --diff-heavy-bg:#fce4ec;--diff-heavy-c:#880e4f;
+  --fav:#c8960c;
+  --font:'Noto Sans JP',sans-serif;
+  --font-serif:'Noto Serif JP',serif;
+  --radius:8px;--radius-lg:12px
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* ===== HEADER ===== */
+.page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 32px 14px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.page-title{font-family:var(--font-serif);font-size:24px;font-weight:700;letter-spacing:-.02em;flex-shrink:0}
+.header-stats{display:flex;gap:14px;flex-wrap:wrap}
+.stat-pill{font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:3px}
+.stat-pill strong{color:var(--text-muted);font-weight:500}
+.controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:160px;max-width:280px}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text-faint);pointer-events:none}
+.search-input{width:100%;padding:6px 9px 6px 28px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface);font-family:var(--font);font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text-faint)}
+select{padding:6px 24px 6px 8px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239b9a97'/%3E%3C/svg%3E") no-repeat right 7px center;font-family:var(--font);font-size:12px;color:var(--text);appearance:none;cursor:pointer;outline:none;transition:border-color .15s}
+select:focus{border-color:var(--accent)}
+select#filterGenre{min-width:140px}
+select#filterPlayers{min-width:116px}
+select#filterTime,select#filterDiff,select#filterCat{min-width:110px}
+select#sortKey{min-width:130px}
+.view-toggle{display:flex;border:1px solid var(--border-hover);border-radius:var(--radius);overflow:hidden;background:var(--surface);flex-shrink:0}
+.view-btn{padding:6px 10px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;transition:background .15s,color .15s;font-family:var(--font)}
+.view-btn:not(:last-child){border-right:1px solid var(--border)}
+.view-btn.active{background:var(--surface2);color:var(--text);font-weight:500}
+.view-btn:hover:not(.active){background:var(--bg)}
+.result-count{font-size:12px;color:var(--text-faint);white-space:nowrap;align-self:center}
+.content{padding:20px 32px 60px;max-width:1600px;margin:0 auto}
+
+/* ===== GALLERY ===== */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.game-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:border-color .18s,box-shadow .18s}
+.game-card:hover{border-color:var(--border-hover);box-shadow:0 3px 14px rgba(55,53,47,.08)}
+.card-image-wrap{width:100%;aspect-ratio:1/1;background:var(--surface2);position:relative;overflow:hidden;flex-shrink:0;cursor:zoom-in}
+.card-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s,transform .22s}
+.card-image-wrap img.img-loading{opacity:0}
+.card-image-wrap img.img-loaded{opacity:1}
+.card-image-wrap:hover img.img-loaded{transform:scale(1.04)}
+.img-zoom-hint{position:absolute;bottom:7px;right:7px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.38);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none}
+.card-image-wrap:hover .img-zoom-hint{opacity:1}
+.img-zoom-hint svg{width:13px;height:13px;color:#fff}
+.card-img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;gap:6px;cursor:default}
+.card-img-placeholder svg{width:30px;height:30px;opacity:.3}
+.card-body{padding:11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.card-title{font-size:12px;font-weight:700;line-height:1.4;color:var(--text);flex:1}
+.card-no-wrap{display:flex;align-items:center;gap:2px;flex-shrink:0;padding-top:1px}
+.card-fav-star{font-size:10px;color:var(--fav);line-height:1;flex-shrink:0}
+.card-no{font-size:10px;color:var(--text-faint);line-height:1;white-space:nowrap}
+.card-meta{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:2px 6px;border-radius:100px;white-space:nowrap}
+.tag-cat-ボードゲーム{background:var(--tag-bg-bg);color:var(--tag-text-bg)}
+.tag-cat-パーティゲーム{background:var(--tag-bg-party);color:var(--tag-text-party)}
+.tag-cat-マーダーミステリー{background:var(--tag-bg-mm);color:var(--tag-text-mm)}
+.tag-diff-ライト{background:var(--diff-light-bg);color:var(--diff-light-c)}
+.tag-diff-ミドル{background:var(--diff-mid-bg);color:var(--diff-mid-c)}
+.tag-diff-ヘビー{background:var(--diff-heavy-bg);color:var(--diff-heavy-c)}
+.tag[data-tip]{position:relative;cursor:default}
+.tag[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(30,28,26,.88);color:#fff;font-size:10px;font-weight:400;white-space:nowrap;padding:4px 8px;border-radius:5px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:50}
+.tag[data-tip]:hover::after{opacity:1}
+.card-info{display:flex;gap:10px;flex-wrap:wrap}
+.info-item{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text-muted)}
+.info-icon{width:11px;height:11px;flex-shrink:0;color:var(--text-faint)}
+.genre-list{display:flex;flex-wrap:wrap;gap:3px}
+.genre-tag{font-size:10px;color:var(--text-faint);background:var(--surface2);border-radius:4px;padding:1px 5px;border:1px solid var(--border)}
+.card-footer{display:flex;gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid var(--border);flex-wrap:wrap}
+.card-link{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:500;padding:3px 8px;border-radius:var(--radius);border:1px solid var(--border-hover);text-decoration:none;transition:background .15s,border-color .15s;color:var(--text-muted);background:var(--surface)}
+.card-link:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.card-link svg{width:9px;height:9px}
+.card-link-manual:hover{background:#f0f9ec;border-color:#4caf50;color:#2e7d32}
+.lang-badge{font-size:10px;padding:1px 6px;border-radius:100px;background:#fff8e1;color:#856404;font-weight:500;border:1px solid rgba(133,100,4,.15)}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+thead tr{border-bottom:1px solid var(--border);background:var(--surface2)}
+th{text-align:left;padding:8px 11px;font-size:10px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;user-select:none}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg)}
+td{padding:8px 11px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.title-cell{font-weight:500;font-size:12px;white-space:normal;word-break:break-all}
+td.genre-cell{white-space:normal}
+.tbl-img-wrap{width:44px;height:44px;cursor:zoom-in}
+.tbl-img{width:44px;height:44px;object-fit:cover;border-radius:4px;display:block;background:var(--surface2);transition:opacity .3s}
+.tbl-img.img-loading{opacity:0}
+.tbl-img.img-loaded{opacity:1}
+.tbl-no-wrap{display:flex;align-items:center;gap:2px}
+.tbl-fav-star{font-size:10px;color:var(--fav)}
+.col-img{width:58px}.col-no{width:50px}.col-title{width:185px}.col-cat{width:88px}.col-diff{width:64px}
+.col-min{width:40px}.col-max{width:40px}.col-opt{width:68px}.col-time{width:96px}
+.col-genre{width:165px}.col-added{width:80px}.col-link{width:90px}
+
+/* ===== SECTION LABEL ===== */
+.section-label{grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);padding:5px 2px 0;border-top:1px solid var(--border);margin-top:5px}
+.section-label:first-child{border-top:none;margin-top:0}
+.empty{text-align:center;padding:70px 20px;color:var(--text-faint);font-size:13px}
+
+/* ===== LIGHTBOX ===== */
+.lb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s}
+.lb-overlay.lb-open{opacity:1;pointer-events:all}
+.lb-inner{position:relative;max-width:min(90vw,860px);max-height:92vh;display:flex;flex-direction:column;align-items:center;gap:14px}
+.lb-img-wrap{display:flex;align-items:center;justify-content:center;max-width:100%;max-height:72vh}
+.lb-img-wrap img{max-width:100%;max-height:72vh;object-fit:contain;border-radius:var(--radius-lg);box-shadow:0 8px 40px rgba(0,0,0,.6);display:block}
+.lb-info{background:rgba(255,255,255,.10);backdrop-filter:blur(6px);border-radius:var(--radius-lg);padding:14px 18px;max-width:min(90vw,560px);width:100%}
+.lb-title-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lb-title{color:#fff;font-size:15px;font-weight:700;line-height:1.4;flex:1}
+.lb-fav-star{color:var(--fav);font-size:14px}
+.lb-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.lb-intro{color:rgba(255,255,255,.88);font-size:12px;line-height:1.7;margin-bottom:10px}
+.lb-intro-empty{color:rgba(255,255,255,.38);font-size:11px;font-style:italic;margin-bottom:10px}
+.lb-links{display:flex;gap:7px;flex-wrap:wrap}
+.lb-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.25);text-decoration:none;color:rgba(255,255,255,.85);background:rgba(255,255,255,.10);transition:background .15s}
+.lb-link:hover{background:rgba(255,255,255,.22)}
+.lb-link-manual{border-color:rgba(100,220,100,.4);color:rgba(180,255,180,.9)}
+.lb-link-manual:hover{background:rgba(100,220,100,.15)}
+.lb-close{position:absolute;top:-12px;right:-12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:background .15s;z-index:1}
+.lb-close:hover{background:rgba(255,255,255,.28)}
+.lb-hint{font-size:11px;color:rgba(255,255,255,.35)}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,28,26,.9);color:#fff;font-size:12px;padding:10px 18px;border-radius:100px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:2000;display:flex;align-items:center;gap:7px}
+.toast.toast-show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:14px;height:14px;flex-shrink:0}
+
+/* ===== BGG POWERED ===== */
+.bgg-credit{text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text-faint)}
+.bgg-credit a{color:var(--text-faint);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.bgg-credit a:hover{color:var(--text-muted)}
+
+@media(max-width:700px){.page-header{padding:13px 12px 10px}.content{padding:12px}.gallery{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.page-title{font-size:18px}.lb-info{max-width:90vw}}
+</style>
+</head>
+<body>
+
+<!-- ライトボックス -->
+<div class="lb-overlay" id="lbOverlay" role="dialog" aria-modal="true">
+  <div class="lb-inner" id="lbInner">
+    <button class="lb-close" id="lbClose" aria-label="閉じる">&#x2715;</button>
+    <div class="lb-img-wrap"><img id="lbImg" src="" alt=""></div>
+    <div class="lb-info">
+      <div class="lb-title-row">
+        <div class="lb-title" id="lbTitle"></div>
+        <div class="lb-fav-star" id="lbFavStar" style="display:none">★</div>
+      </div>
+      <div class="lb-tags" id="lbTags"></div>
+      <div id="lbIntro"></div>
+      <div class="lb-links" id="lbLinks"></div>
+    </div>
+    <div class="lb-hint">画像の外側をクリック・Escキーで閉じる</div>
+  </div>
+</div>
+
+<!-- トースト通知 -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+  箱絵をタップすると詳細が見られます
+</div>
+
+<header class="page-header">
+  <div class="header-top">
+    <h1 class="page-title">ボードゲームコレクション</h1>
+    <div class="header-stats">
+      <span class="stat-pill"><strong id="total-count">80</strong> タイトル</span>
+      <span class="stat-pill">ボードゲーム <strong id="cnt-bg">—</strong></span>
+      <span class="stat-pill">パーティ <strong id="cnt-pg">—</strong></span>
+      <span class="stat-pill">マーダーミステリー <strong id="cnt-mm">—</strong></span>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="タイトル・ジャンルで検索…">
+    </div>
+    <select id="filterCat">
+      <option value="">すべてのカテゴリ</option>
+      <option value="ボードゲーム">ボードゲーム</option>
+      <option value="パーティゲーム">パーティゲーム</option>
+      <option value="マーダーミステリー">マーダーミステリー</option>
+    </select>
+    <select id="filterDiff">
+      <option value="">すべての難易度</option>
+      <option value="ライト">ライト ― 誰でもすぐ遊べる</option>
+      <option value="ミドル">ミドル ― 少し慣れが必要</option>
+      <option value="ヘビー">ヘビー ― じっくり向き合うゲーム</option>
+    </select>
+    <select id="filterPlayers">
+      <option value="">すべての人数</option>
+      <option value="2">2人で遊べる</option>
+      <option value="3">3人で遊べる</option>
+      <option value="4">4人で遊べる</option>
+      <option value="5">5人で遊べる</option>
+      <option value="6">6人で遊べる</option>
+      <option value="7">7人で遊べる</option>
+      <option value="8">8人以上で遊べる</option>
+    </select>
+    <select id="filterTime">
+      <option value="">すべての時間</option>
+      <option value="s1">〜15分</option>
+      <option value="s2">15〜30分</option>
+      <option value="s3">30〜60分</option>
+      <option value="s4">60〜90分</option>
+      <option value="s5">90〜120分</option>
+      <option value="s6">120分〜</option>
+    </select>
+    <select id="filterGenre">
+      <option value="">すべてのジャンル</option>
+      <optgroup label="推理・正体"><option value="推理">推理</option><option value="推理パズル">推理パズル</option><option value="情報収集">情報収集</option><option value="正体隠匿">正体隠匿</option><option value="非対称推理">非対称推理</option><option value="非対称ブラフ">非対称ブラフ</option></optgroup><optgroup label="協力・チーム"><option value="協力">協力</option><option value="協力対戦">協力対戦</option><option value="チーム戦">チーム戦</option></optgroup><optgroup label="ドラフト・競争"><option value="ドラフト">ドラフト</option><option value="競り">競り</option><option value="ビッド">ビッド</option></optgroup><optgroup label="陣取り・移動"><option value="エリアマジョリティ">エリアマジョリティ</option><option value="エリア獲得">エリア獲得</option><option value="エリア配置">エリア配置</option><option value="エリア移動">エリア移動</option><option value="エリア開発">エリア開発</option></optgroup><optgroup label="構築・資源"><option value="ワーカープレイスメント">ワーカープレイスメント</option><option value="デッキ構築">デッキ構築</option><option value="エンジン構築">エンジン構築</option><option value="拡大再生産">拡大再生産</option><option value="リソース管理">リソース管理</option><option value="ルート構築">ルート構築</option><option value="バリアブルフェーズオーダー">バリアブルフェーズオーダー</option></optgroup><optgroup label="手札・カード"><option value="ハンドマネジメント">ハンドマネジメント</option><option value="手札管理">手札管理</option><option value="トリックテイキング">トリックテイキング</option></optgroup><optgroup label="パーティ・ワード"><option value="ワード">ワード</option><option value="連想">連想</option><option value="リアルタイム">リアルタイム</option><option value="反射神経">反射神経</option></optgroup><optgroup label="配置・パズル"><option value="タイル配置">タイル配置</option><option value="カード配置">カード配置</option><option value="パズル">パズル</option><option value="アブストラクト">アブストラクト</option><option value="バランス">バランス</option></optgroup><optgroup label="その他"><option value="心理戦">心理戦</option><option value="ブラフ">ブラフ</option><option value="ダイス">ダイス</option><option value="ダイスプレイスメント">ダイスプレイスメント</option><option value="ギャンブル">ギャンブル</option><option value="クイズ">クイズ</option><option value="セットコレクション">セットコレクション</option><option value="交渉">交渉</option><option value="人狼">人狼</option><option value="レガシー">レガシー</option><option value="シミュレーション">シミュレーション</option><option value="コンプレックス暴露">コンプレックス暴露</option><option value="記憶">記憶</option><option value="非対称">非対称</option><option value="非対称対戦">非対称対戦</option></optgroup>
+    
+    </select>
+    <select id="sortKey">
+      <option value="no">No. 順</option>
+      <option value="added_desc">追加日 新しい順</option>
+      <option value="added_asc">追加日 古い順</option>
+      <option value="title">タイトル順</option>
+      <option value="time_asc">時間 短い順</option>
+      <option value="time_desc">時間 長い順</option>
+    </select>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnGallery" onclick="setView('gallery')">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor"/><rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor"/><rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor"/><rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor"/></svg>
+        カード
+      </button>
+      <button class="view-btn" id="btnTable" onclick="setView('table')">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect y="0" width="14" height="2.5" rx="1" fill="currentColor"/><rect y="4" width="14" height="2.5" rx="1" fill="currentColor"/><rect y="8" width="14" height="2.5" rx="1" fill="currentColor"/><rect y="12" width="14" height="2" rx="1" fill="currentColor"/></svg>
+        テーブル
+      </button>
+    </div>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+</header>
+
+<main class="content">
+  <div id="galleryView" class="gallery"></div>
+  <div id="tableView" class="table-wrap" style="display:none">
+    <table>
+      <thead><tr>
+        <th class="col-img"></th>
+        <th class="col-no">No</th>
+        <th class="col-title">タイトル</th>
+        <th class="col-cat">カテゴリ</th>
+        <th class="col-diff">難易度</th>
+        <th class="col-min">最小</th>
+        <th class="col-max">最大</th>
+        <th class="col-opt">最適</th>
+        <th class="col-time">時間</th>
+        <th class="col-genre">ジャンル / メカニクス</th>
+        <th class="col-added">追加日</th>
+        <th class="col-link">リンク</th>
+      </tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="emptyMsg" style="display:none">条件に合うゲームが見つかりませんでした</div>
+
+  <!-- BGG利用規約: Powered by BGGロゴ表示 -->
+  <div class="bgg-credit">
+    <a href="https://boardgamegeek.com" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" fill="#FF5100"/><text x="50" y="68" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="52" fill="white">B</text></svg>
+      Powered by BoardGameGeek
+    </a>
+  </div>
+</main>
+
+<script>
+const GAMES = [{"no":1,"title":"ワケアリガールコレクション","cat":"ボードゲーム","genre":["手札管理","心理戦"],"min":2,"max":6,"opt":"3〜4人","time":"10〜15分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/wakeari-girls-collection","bgg":"https://boardgamegeek.com/boardgame/380781/wakeari-girls-collection","bgg_id":"380781","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1USye3pIrUbSE178PN096xZJWiIMQ-ETY/view?usp=sharing","added":"2026-04-11"},{"no":2,"title":"エイジオブエイジ","cat":"ボードゲーム","genre":["ドラフト"],"min":1,"max":5,"opt":"3〜4人","time":"15～30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-ages","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1-rMXR-J5rHIkVehM2TnI9RVntDgScs2z&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1RVB5NE-KHT2wYE_mduUoDSJPFykKE_39/view?usp=drive_link","added":"2026-04-11"},{"no":3,"title":"エイジオブネイバー","cat":"ボードゲーム","genre":["セットコレクション"],"min":2,"max":4,"opt":"3〜4人","time":"10～20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-neighbors","bgg":"https://boardgamegeek.com/boardgame/430403/age-of-neighbors","bgg_id":"430403","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1KPkIzUVUnRqQQ1F1ZWz-Skhw0NiWNFNi/view?usp=drive_link","added":"2026-04-11"},{"no":4,"title":"エイジオブウィル","cat":"ボードゲーム","genre":["ドラフト","セットコレクション"],"min":2,"max":4,"opt":"3〜4人","time":"10〜15分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-will","bgg":"https://boardgamegeek.com/boardgame/374064/age-of-will","bgg_id":"374064","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1fy8iOMXeHjdFC1Bpg4OqyFfK3IiMNIbB/view?usp=drive_link","added":"2026-04-11"},{"no":5,"title":"エイジオブジャーニー","cat":"ボードゲーム","genre":["ワーカープレイスメント"],"min":2,"max":4,"opt":"3〜4人","time":"45～90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-journey","bgg":"https://boardgamegeek.com/boardgame/352925/age-of-journey","bgg_id":"352925","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1Mr_1KBMfzIOMFNifxMmI-IFdEaewYQqI/view?usp=drive_link","added":"2026-04-11"},{"no":6,"title":"エイジオブプロモート","cat":"ボードゲーム","genre":["ドラフト"],"min":2,"max":4,"opt":"3〜4人","time":"30〜45分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-promote","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1cSqHI2Ei1Q1kd7GvBEU5uJ2RXJLBurCf&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1fiQCXvVyTbsXNSaaomcU1Yi1Rm4T6aU2/view?usp=drive_link","added":"2026-04-11"},{"no":7,"title":"トリックラナウェイ","cat":"ボードゲーム","genre":["トリックテイキング"],"min":2,"max":5,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/trick-runaway","bgg":"https://boardgamegeek.com/boardgame/410345/trick-runaway","bgg_id":"410345","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1COpBR6CZSLKHcU1Mb_xay0IEUMl0PIvG/view?usp=drive_link","added":"2026-04-11"},{"no":8,"title":"トリックレイダース","cat":"ボードゲーム","genre":["トリックテイキング"],"min":3,"max":5,"opt":"4〜5人","time":"30〜45分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/trick-raideers","bgg":"https://boardgamegeek.com/boardgame/374336/trick-raiders","bgg_id":"374336","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1wCBGDcnCbANWjTGhmQKT1w6WLA1XMD5u/view?usp=drive_link","added":"2026-04-11"},{"no":9,"title":"戦国トルネード","cat":"ボードゲーム","genre":["ドラフト","セットコレクション"],"min":2,"max":4,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/sengoku-tornado","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=185iuycE6cFRAozlw04yQvh_PQbfoMHVe&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1fIlEpJOZ_V1hNVa_Ktq5Owzt3z1YAElp/view?usp=drive_link","added":"2026-04-11"},{"no":10,"title":"ツギハギキングダム","cat":"ボードゲーム","genre":["ドラフト","エリア獲得","パズル","セットコレクション"],"min":2,"max":9,"opt":"3〜4人","time":"10〜15分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/tsugihagi-kingdom","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1QMkIEaEGV98r6mEpvYnxH7ogvKvgmdwz&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1XttTKsrUpQAXJAHil3TGNg2Em8jahCrI/view?usp=drive_link","added":"2026-04-11"},{"no":11,"title":"ツギハギクエスト","cat":"ボードゲーム","genre":["ドラフト","エリア獲得","パズル","セットコレクション"],"min":2,"max":9,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/tsugihagi-quest","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1oeqU-rlODu7_5ubcpLh-aZK-fAf0dmzY&sz=w400","fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1mv9lG_HiYDYvl9FX38dsMtUCiWZuDXkP/view?usp=drive_link","added":"2026-04-11"},{"no":12,"title":"GRAPH-T","cat":"ボードゲーム","genre":["トリックテイキング"],"min":1,"max":4,"opt":"3〜4人","time":"20〜30分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/grapht","bgg":"https://boardgamegeek.com/boardgame/414508/graph-t-gurahuto","bgg_id":"414508","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1mrS-AMdjaPiptZWIdUPrY811gTkJ-HwF/view?usp=drive_link","added":"2026-04-11"},{"no":13,"title":"Up Down 30（アップダウン30）","cat":"ボードゲーム","genre":["ゴーアウト"],"min":2,"max":8,"opt":"4〜6人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/updown30","bgg":"https://boardgamegeek.com/boardgame/447646/up-down-30","bgg_id":"447646","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":14,"title":"ナナ クリスマス","cat":"ボードゲーム","genre":["セットコレクション"],"min":2,"max":6,"opt":"3〜5人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/nana-christmas","bgg":"https://boardgamegeek.com/boardgame/401168/nana-christmas-edition","bgg_id":"401168","img":null,"fav":true,"intro":null,"manual":null,"added":"2026-04-11"},{"no":15,"title":"マダミスらいく","cat":"ボードゲーム","genre":["正体隠匿","人狼"],"min":4,"max":8,"opt":"5〜7人","time":"30〜45分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/madamisu-like","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1p2-l_wxyPFAwximjPsf2GP-nDdpJZdmJ&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":16,"title":"ビッドスリー","cat":"ボードゲーム","genre":["ビッド","トリックテイキング"],"min":3,"max":3,"opt":"3人","time":"30〜40分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/bid3","bgg":"https://boardgamegeek.com/boardgame/422035/bid3","bgg_id":"422035","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":17,"title":"想像と言葉","cat":"パーティゲーム","genre":["ワード","連想"],"min":3,"max":8,"opt":"4〜6人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/image-and-word","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1NYqJXBhXb5U9W1M-ENAbsgomM-C_rBoX&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":18,"title":"エイダの書庫","cat":"ボードゲーム","genre":["アブストラクト","パズル"],"min":2,"max":2,"opt":"2人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/adas-library","bgg":"https://boardgamegeek.com/boardgame/6481/phoenix","bgg_id":"6481","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":19,"title":"ジャンポンキング","cat":"ボードゲーム","genre":["アブストラクト"],"min":2,"max":2,"opt":"2人","time":"5〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/jumponking","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1iQl79nOBuoFZx0A0-UsUdYNhbhh2z0qM&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":20,"title":"ZERO","cat":"ボードゲーム","genre":["手札管理","セットコレクション"],"min":2,"max":6,"opt":"3〜5人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/zero","bgg":"https://boardgamegeek.com/boardgame/102792/zero","bgg_id":"102792","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":21,"title":"ムジカク人狼","cat":"パーティゲーム","genre":["正体隠匿","人狼"],"min":3,"max":7,"opt":"5～7人","time":"5～10分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/mujikaku-jinro","bgg":"https://boardgamegeek.com/boardgame/448074/muzikakuren-lang-unaware-werewolf","bgg_id":"448074","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1B1D0hhPK05oSjw9ByRycZlzy3NovhNSK/view?usp=drive_link","added":"2026-04-11"},{"no":22,"title":"ダイイングメッセージ","cat":"パーティゲーム","genre":["推理"],"min":2,"max":8,"opt":"5〜7人","time":"30〜45分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/dying-message-oink","bgg":"https://boardgamegeek.com/boardgame/418855/dying-message","bgg_id":"418855","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":23,"title":"人間ゲーム コンプレックス人狼","cat":"パーティゲーム","genre":["正体隠匿","人狼","コンプレックス暴露"],"min":4,"max":12,"opt":"6〜8人","time":"10〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/ningen-game-complex-werewolf","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1H-mtQHEsI6BXunmvd5AqJW1nbasyB1nu&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":24,"title":"じゅもんじ","cat":"ボードゲーム","genre":["ワード","心理戦"],"min":2,"max":4,"opt":null,"time":"20〜30分","diff":"ライト","lang":"あり","bodoge":"https://gamemarket.jp/game/182645","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1d4y9226ln3PfoXxfD2Q-zUlcX-hQLerv&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":25,"title":"赤ずきんは眠らない","cat":"ボードゲーム","genre":["非対称ブラフ","心理戦"],"min":3,"max":6,"opt":"3〜6人","time":"30〜45分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/eat-me-if-you-can","bgg":"https://boardgamegeek.com/boardgame/145722/eat-me-if-you-can","bgg_id":"145722","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":26,"title":"悪役令嬢がいっぱい！？ ～わたくしだけでも破滅フラグをへし折ってさしあげますわ！～","cat":"ボードゲーム","genre":["正体隠匿"],"min":3,"max":5,"opt":"3〜5人","time":"20〜40分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/3417","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1YWe0hKAsDy0wMXImdn_FDid32MipBedL&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1CGCbKeZEh9_ba5ZGuHyuVCsPaUCBYyaE/view?usp=drive_link","added":"2026-04-11"},{"no":27,"title":"探ぱん","cat":"パーティゲーム","genre":["推理"],"min":2,"max":5,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/tanpan","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1b6Bsml9DB01C3sWv_rpM77-HPpwya7Gi&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":28,"title":"探ぱん アズールレーンver.","cat":"パーティゲーム","genre":["推理"],"min":2,"max":5,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/5774","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1Pr6-gzi7mubz4tF4NgAI5PKBob9Ky6Gu&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":29,"title":"メゾン・ド・ナイトメア","cat":"ボードゲーム","genre":["タイル配置","エリア移動","拡大再生産"],"min":2,"max":5,"opt":"2〜5人","time":"40〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/maison-de-nightmare","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1loSQ-Wxr1R_cHdJqVN1RKgOZzT6GmwTG&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1a1prk2zZUXD9eePKejvdHD4gzj6jClA5/view?usp=drive_link","added":"2026-04-11"},{"no":30,"title":"Sweet Lands","cat":"ボードゲーム","genre":["ワーカープレイスメント","エンジン構築","エリア開発"],"min":1,"max":4,"opt":"2〜4人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://note.com/uchibacoya/n/n3f8780c75433","bgg":"https://boardgamegeek.com/boardgame/425445/sweet-lands","bgg_id":"425445","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1KWD_0iDlAxjMOuMmJKv56mxHzs-2W9cw/view?usp=drive_link","added":"2026-04-11"},{"no":31,"title":"迷宮推理","cat":"ボードゲーム","genre":["非対称推理","正体隠匿"],"min":3,"max":5,"opt":"4～5人","time":"30～45分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/labylinth-mystery","bgg":"https://boardgamegeek.com/boardgame/345586/mi-gong-tui-li-labyrinthine-mystery","bgg_id":"345586","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":32,"title":"Genoa（ジェノバの商人）","cat":"ボードゲーム","genre":["競り","ルート構築","交渉"],"min":2,"max":5,"opt":"3〜4人","time":"90～120分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/die-haendler-von-genua","bgg":"https://boardgamegeek.com/boardgame/1345/genoa","bgg_id":"1345","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1G1AHdDyTKMsKNINNcwaGFyPkIoM-gvX_/view?usp=drive_link","added":"2026-04-11"},{"no":33,"title":"しあわせのいと","cat":"ボードゲーム","genre":["非対称対戦","推理パズル"],"min":1,"max":2,"opt":"2人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/shiawaseno-ito","bgg":"https://boardgamegeek.com/boardgame/389300/shiawasenoito-shiawase-no-ito","bgg_id":"389300","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1vApxdvVVYkmTvxhzVfjKHAFkaA8qtz-_/view?usp=drive_link","added":"2026-04-11"},{"no":34,"title":"破宮の十重奏","cat":"ボードゲーム","genre":["デッキ構築","レガシー","協力"],"min":1,"max":2,"opt":"1〜2人","time":"30〜100分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/dungeon-dectet","bgg":"https://boardgamegeek.com/boardgame/381723/po-gong-noshi-zhong-zou-dungeon-and-dectet","bgg_id":"381723","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-12"},{"no":35,"title":"コンペテレ ～ジェレミア魔法学校の工房～","cat":"ボードゲーム","genre":["ワーカープレイスメント","リソース管理"],"min":2,"max":4,"opt":"3〜4人","time":"60〜90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/competere-atelier-magical-school-jeremiah","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=15p8FDCOAsw9rgosZo3bWTXoZZLCKV8lJ&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-12"},{"no":36,"title":"冒険少女ギルド","cat":"ボードゲーム","genre":["デッキ構築"],"min":1,"max":4,"opt":"2〜4人","time":"30〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/adventures-guild-girls-bg","bgg":"https://boardgamegeek.com/boardgame/447280/adventurers-guild-girls-the-board-game","bgg_id":"447280","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1OATqyvqypDQRTg4Ne9YxN1N4MosKV7nU/view?usp=drive_link","added":"2026-04-12"},{"no":37,"title":"factovillage","cat":"ボードゲーム","genre":["エンジン構築","カード配置","タイル配置"],"min":2,"max":4,"opt":"2〜4人","time":"30〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/factovillage","bgg":"https://boardgamegeek.com/boardgame/408775/factovillage","bgg_id":"408775","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":38,"title":"KAWASAKI NEON GANGSTA (カワサキネオンギャングスタ)","cat":"ボードゲーム","genre":["ワーカープレイスメント","エリアマジョリティ"],"min":3,"max":5,"opt":"4〜5人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/kawasaki-neon-gangsta","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1gMTyuRRT7gc2UaResxJCDg_TmixaGCT2&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":39,"title":"Eden’s Shadow","cat":"ボードゲーム","genre":["デッキ構築","エンジン構築"],"min":1,"max":4,"opt":"2〜4人","time":"120～180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/edens-shadow","bgg":"https://boardgamegeek.com/boardgame/422890/edens-shadow","bgg_id":"422890","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1lnJ10VatBYeuAuM1UJpd4PHoHPmVDvVL/view?usp=drive_link","added":"2026-04-11"},{"no":40,"title":"おばけキャッチ","cat":"ボードゲーム","genre":["リアルタイム","反射神経"],"min":2,"max":8,"opt":"3〜6人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/geistesblitz","bgg":"https://boardgamegeek.com/boardgame/83195/ghost-blitz","bgg_id":"83195","img":null,"fav":true,"intro":null,"manual":null,"added":"2026-04-11"},{"no":41,"title":"キャプテンリノ","cat":"ボードゲーム","genre":["バランス"],"min":2,"max":5,"opt":"2〜5人","time":"10〜15分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/super-rhino","bgg":"https://boardgamegeek.com/boardgame/91514/rhino-hero","bgg_id":"91514","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":42,"title":"小早川","cat":"ボードゲーム","genre":["ギャンブル","ブラフ"],"min":3,"max":6,"opt":"3〜6人","time":"15〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/kobayakawa","bgg":"https://boardgamegeek.com/boardgame/142325/kobayakawa","bgg_id":"142325","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":43,"title":"ワードバスケット","cat":"ボードゲーム","genre":["ワード","リアルタイム","反射神経"],"min":2,"max":10,"opt":"3〜6人","time":"10〜15分","diff":"ライト","lang":"あり","bodoge":"https://bodoge.hoobby.net/games/word-basket","bgg":"https://boardgamegeek.com/boardgame/15000/word-basket","bgg_id":"15000","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":44,"title":"ファウナ","cat":"ボードゲーム","genre":["クイズ","エリア配置"],"min":2,"max":6,"opt":"3〜5人","time":"45〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/fauna","bgg":"https://boardgamegeek.com/boardgame/35497/fauna","bgg_id":"35497","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1n81Z1MjvsTSn9UfAbiyI1RlYtzBYEsdP/view?usp=drive_link","added":"2026-04-11"},{"no":45,"title":"ブラフ","cat":"パーティゲーム","genre":["ダイス","ブラフ"],"min":2,"max":6,"opt":"4〜6人","time":"20～30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/bluff","bgg":"https://boardgamegeek.com/boardgame/245136/bluff-jubilaumsausgabe","bgg_id":"245136","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":46,"title":"ブロックス","cat":"ボードゲーム","genre":["タイル配置","アブストラクト"],"min":2,"max":4,"opt":"4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/blokus","bgg":"https://boardgamegeek.com/boardgame/2453/blokus","bgg_id":"2453","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":47,"title":"あやつり人形","cat":"ボードゲーム","genre":["ドラフト","正体隠匿","セットコレクション"],"min":2,"max":8,"opt":"4〜6人","time":"60～90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/citadels","bgg":"https://boardgamegeek.com/boardgame/478/citadels","bgg_id":"478","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":48,"title":"ペーパーテイルズ","cat":"ボードゲーム","genre":["ドラフト","エンジン構築"],"min":2,"max":5,"opt":"3〜4人","time":"30〜45分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/paper-tales","bgg":"https://boardgamegeek.com/boardgame/217861/paper-tales","bgg_id":"217861","img":null,"fav":true,"intro":null,"manual":null,"added":"2026-04-11"},{"no":49,"title":"プエルトリコ","cat":"ボードゲーム","genre":["バリアブルフェーズオーダー","エンジン構築","拡大再生産"],"min":3,"max":5,"opt":"4〜5人","time":"60～90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/puerto-rico","bgg":"https://boardgamegeek.com/boardgame/3076/puerto-rico","bgg_id":"3076","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/14XkhhZcDyDk1VXJnysF9sx2Xd4Mka1Xt/view?usp=drive_link","added":"2026-04-11"},{"no":50,"title":"テラミスティカ","cat":"ボードゲーム","genre":["エリアマジョリティ","非対称","ワーカープレイスメント"],"min":2,"max":5,"opt":"3〜4人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/terra-mystica","bgg":"https://boardgamegeek.com/boardgame/120677/terra-mystica","bgg_id":"120677","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":51,"title":"アグリコラ 15周年記念版","cat":"ボードゲーム","genre":["ワーカープレイスメント","リソース管理","拡大再生産"],"min":1,"max":5,"opt":"3〜4人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/agricola","bgg":"https://boardgamegeek.com/boardgame/31260/agricola","bgg_id":"31260","img":null,"fav":true,"intro":null,"manual":null,"added":"2026-04-11"},{"no":52,"title":"村の人生 BIG BOX","cat":"ボードゲーム","genre":["ワーカープレイスメント","エンジン構築"],"min":2,"max":5,"opt":"3〜4人","time":"60〜90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/village","bgg":"https://boardgamegeek.com/boardgame/104006/village","bgg_id":"104006","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":53,"title":"テラミスティカ：革新の時代","cat":"ボードゲーム","genre":["エリアマジョリティ","非対称","ワーカープレイスメント"],"min":1,"max":5,"opt":"3〜4人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/age-innovation","bgg":"https://boardgamegeek.com/boardgame/383179/age-of-innovation","bgg_id":"383179","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1mIu04PDQviWFjRvpEJcQS4Ie-QppKGJf/view?usp=drive_link","added":"2026-04-11"},{"no":54,"title":"ディシプリン ～ジェレミア魔法学校の３年間～ 新装版","cat":"ボードゲーム","genre":["協力","タイル配置","カード配置"],"min":2,"max":5,"opt":"3〜4人","time":"45〜90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/4724","bgg":"https://boardgamegeek.com/boardgame/360469/discipline-zieremiamo-fa-xue-xiao-no3nian-jian","bgg_id":"360469","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":55,"title":"コンコルディア","cat":"ボードゲーム","genre":["ルート構築","ハンドマネジメント"],"min":2,"max":5,"opt":"3〜4人","time":"90〜120分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/concordia","bgg":"https://boardgamegeek.com/boardgame/124361/concordia","bgg_id":"124361","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/111H7kK4LCA6ohEQ8iwAdvj0lpQwSR5cQ/view?usp=drive_link","added":"2026-04-11"},{"no":56,"title":"マジョ×まじょ","cat":"ボードゲーム","genre":["セットコレクション","ハンドマネジメント"],"min":2,"max":5,"opt":"3〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/majorityxmagical-girl","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1ha8M6FCMbJEw67q0HlfHDxkLUE9wntfk&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":57,"title":"カリナン ～9つと96粒のダイヤモンド～","cat":"ボードゲーム","genre":["拡大再生産","セットコレクション"],"min":2,"max":5,"opt":"2〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/karinan","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1WzhjszRM6-JXnzkUtqbQt6TyItWdA1gD&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1UsM3loFPNNLPuwl7Q18UpaULhERLucOZ/view?usp=drive_link","added":"2026-04-11"},{"no":58,"title":"ことのはとりて","cat":"ボードゲーム","genre":["トリックテイキング","ワード","リアルタイム"],"min":3,"max":6,"opt":"3〜6人","time":"20〜30分","diff":"ライト","lang":"あり","bodoge":"https://bodoge.hoobby.net/market/items/7323","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1rPzXrgoTBtf751ZdqhEM9PNXLwBCR_PH&sz=w400","fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1QLMh5YBMvVDzialH3hbnAtF54R5gSInk/view?usp=drive_link","added":"2026-04-11"},{"no":59,"title":"Witches Whisk ～ジェレミア魔法学校の訓練法～","cat":"ボードゲーム","genre":["ダイスプレイスメント","デッキ構築","協力"],"min":1,"max":4,"opt":"1〜4人","time":"60〜90分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/witches-whisk","bgg":"https://boardgamegeek.com/boardgame/382174/uitsuchizuuisuku-witches-whisk","bgg_id":"382174","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":60,"title":"レール・オン・ザ・ヒル","cat":"ボードゲーム","genre":["タイル配置","ルート構築","ドラフト"],"min":1,"max":4,"opt":"2〜4人","time":"30〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/rail-on-hill","bgg":"https://boardgamegeek.com/boardgame/432324/the-rail-on-the-hill","bgg_id":"432324","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":61,"title":"オラパ・マイン","cat":"ボードゲーム","genre":["推理","パズル","情報収集"],"min":2,"max":5,"opt":"2〜4人","time":"20〜30分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/orapa-mine","bgg":"https://boardgamegeek.com/boardgame/424152/orapa-mine","bgg_id":"424152","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1308NpO-uzxvPO0SgEmh7PxgMO8fgB4aE/view?usp=drive_link","added":"2026-04-11"},{"no":62,"title":"モダンアート","cat":"ボードゲーム","genre":["競り","ハンドマネジメント"],"min":3,"max":5,"opt":"4〜5人","time":"45分～60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/modern-art","bgg":"https://boardgamegeek.com/boardgame/118/modern-art","bgg_id":"118","img":null,"fav":true,"intro":null,"manual":"https://drive.google.com/file/d/1NZhY-IN79laUSSH_B3uwJp4QEq-lbj66/view?usp=drive_link","added":"2026-04-11"},{"no":63,"title":"ボルカルス","cat":"ボードゲーム","genre":["非対称","協力対戦"],"min":2,"max":4,"opt":"4人","time":"60〜80分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/vulcanus","bgg":"https://boardgamegeek.com/boardgame/298678/vulcanus","bgg_id":"298678","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-12"},{"no":64,"title":"ミレニアムブレード","cat":"ボードゲーム","genre":["デッキ構築","シミュレーション"],"min":2,"max":5,"opt":"3〜5人","time":"120〜180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/millennium-blades","bgg":"https://boardgamegeek.com/boardgame/151347/millennium-blades","bgg_id":"151347","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-12"},{"no":65,"title":"Ra（ラー）","cat":"ボードゲーム","genre":["セットコレクション","競り"],"min":2,"max":5,"opt":"3〜4人","time":"45〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/ra","bgg":"https://boardgamegeek.com/boardgame/12/ra","bgg_id":"12","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1dJgCud-c78hS8wXEugTJmfjB2t1zPNqD/view?usp=drive_link","added":"2026-04-12"},{"no":66,"title":"裏切りのロンド","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":4,"max":6,"opt":"5〜6人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mpb/mpb25.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=12HkrxqvEYZt7OFPEBHe-MqDdq1oyZ9jx&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":67,"title":"棺呪い","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":4,"max":6,"opt":"5〜6人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mmm/mmm19.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=11DOgQUjUk9DyE7tg6jfYG_rbkFb7QUUC&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":68,"title":"廃城の錬金術師","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":4,"max":6,"opt":"5〜6人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mpb/mpb13.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1vHivOhEr1VpzvZCBFrdiIvYB5RGLlb8I&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":69,"title":"キャンプ場の殺人鬼","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":4,"max":6,"opt":"5〜6人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mmm/mmm20.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=13I2hDYPDsNANXGVBouI3FSlQmtLsbo5l&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":70,"title":"5人の銀行強盗","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":5,"max":5,"opt":"5人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mmm/mmm18.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1vi_zlBw9in23q45ApMsrfXNZ42Q0RRrv&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":71,"title":"ウェンディ、大人になって","cat":"マーダーミステリー","genre":["推理","ロールプレイ"],"min":4,"max":6,"opt":"5〜6人","time":"60〜120分","diff":null,"lang":"あり","bodoge":"https://www.groupsne.co.jp/products/bg/mmm/mmm04.html","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1YUHYnsOiWnJ-Rjocr0pqvpV87HYs8KWO&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":72,"title":"スコットランドヤード東京","cat":"ボードゲーム","genre":["非対称対戦","エリア移動","推理"],"min":3,"max":6,"opt":"3〜6人","time":"45～60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/1221","bgg":"https://boardgamegeek.com/boardgame/255744/scotland-yard-tokyo","bgg_id":"255744","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":73,"title":"ネオドリームズ","cat":"ボードゲーム","genre":["ワーカープレイスメント","エンジン構築","リソース管理"],"min":2,"max":4,"opt":"3〜4人","time":"30〜60分","diff":"ミドル","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/neodreams","bgg":"https://boardgamegeek.com/boardgame/379582/neodreams","bgg_id":"379582","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":74,"title":"惨劇ルーパー5th","cat":"ボードゲーム","genre":["非対称推理","正体隠匿"],"min":2,"max":4,"opt":"4人","time":"120～180分","diff":"ヘビー","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/tragedy-looper-5th","bgg":"https://boardgamegeek.com/boardgame/148319/tragedy-looper","bgg_id":"148319","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":75,"title":"カジノロワイヤル","cat":"ボードゲーム","genre":["ギャンブル","手札管理"],"min":3,"max":5,"opt":"3〜5人","time":"10～20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/2087","bgg":"https://boardgamegeek.com/boardgame/256801/fast-forward-fortune","bgg_id":"256801","img":null,"fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":76,"title":"春夏冬中（あきないちゅう）","cat":"ボードゲーム","genre":["推理","情報収集","記憶"],"min":3,"max":4,"opt":"3〜4人","time":"10〜20分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/market/items/2406","bgg":"https://boardgamegeek.com/boardgame/159359/during-spring-summer-and-winter","bgg_id":"159359","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1UoUY3rs6yVq8_k0WHDDv_dQSAwPxT5Mo/view?usp=drive_link","added":"2026-04-11"},{"no":77,"title":"こびとのくつや","cat":"ボードゲーム","genre":["セットコレクション","ハンドマネジメント"],"min":2,"max":4,"opt":"4人","time":"20～40分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/the-elves-and-the-shoemaker","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1TQK3xJ6C3h-B0bwP1JSyiHl_FWygCf5u&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":78,"title":"ファントム・インク","cat":"パーティゲーム","genre":["チーム戦","ワード","推理"],"min":4,"max":8,"opt":"5〜8人","time":"10〜15分","diff":"ライト","lang":"なし","bodoge":"https://bodoge.hoobby.net/games/phantom-ink","bgg":"https://boardgamegeek.com/boardgame/330592/phantom-ink","bgg_id":"330592","img":null,"fav":true,"intro":null,"manual":null,"added":"2026-04-11"},{"no":79,"title":"リフレクトルタ","cat":"ボードゲーム","genre":["正体隠匿","人狼"],"min":4,"max":6,"opt":"6人","time":"45～60分","diff":"ミドル","lang":"あり","bodoge":"https://gamemarket.jp/game/182765","bgg":null,"bgg_id":null,"img":"https://drive.google.com/thumbnail?id=1QC4MJY8h2fD12xIba4icsYNG5QkFxxSE&sz=w400","fav":false,"intro":null,"manual":null,"added":"2026-04-11"},{"no":80,"title":"Miraris","cat":"ボードゲーム","genre":["バッティング"],"min":3,"max":6,"opt":"4～6人","time":"15～30分","diff":"ライト","lang":"あり","bodoge":"https://bodoge.hoobby.net/games/miraris","bgg":"https://boardgamegeek.com/boardgame/245876/miraris","bgg_id":"245876","img":null,"fav":false,"intro":null,"manual":"https://drive.google.com/file/d/1D-So9-Bba2b2JJUTxedy_GOw4ywvUs1B/view?usp=drive_link","added":"2026-04-11"}];
+
+// =====================================================
+// 画像キャッシュ (LocalStorage・24時間)
+// ─ Netlify Function が CDN にもキャッシュするため
+//   同一ブラウザでは Function すら呼ばれない二重構造
+// =====================================================
+const CACHE_KEY = 'bgg_img_v3';
+const CACHE_TTL = 86400000; // 24h
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return {};
+    const now = Date.now();
+    return Object.fromEntries(
+      Object.entries(JSON.parse(raw)).filter(([, v]) => now - v.ts < CACHE_TTL)
+    );
+  } catch { return {}; }
+}
+function saveCache(c) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch {}
+}
+const imgCache = loadCache();
+
+// =====================================================
+// BGG画像取得キュー
+// ─ Netlify Function (/.netlify/functions/bgg-image?id=XXX)
+//   にリクエストを送り、サーバー側でBGGへアクセスする。
+//   100ms 間隔で順番にリクエストし、BGGへの負荷を抑制。
+// =====================================================
+const bggQueue = [];
+let bggTimer = null;
+
+function enqueueBgg(bggId, callback) {
+  if (imgCache[bggId] !== undefined) {
+    callback(imgCache[bggId].url || '');
+    return;
+  }
+  bggQueue.push({ bggId, callback });
+  if (!bggTimer) processBggQueue();
+}
+
+function processBggQueue() {
+  if (!bggQueue.length) { bggTimer = null; return; }
+  const { bggId, callback } = bggQueue.shift();
+  if (imgCache[bggId] !== undefined) {
+    callback(imgCache[bggId].url || '');
+    bggTimer = setTimeout(processBggQueue, 50);
+    return;
+  }
+  fetchBggViaFunction(bggId).then(url => {
+    imgCache[bggId] = { url, ts: Date.now() };
+    saveCache(imgCache);
+    callback(url);
+    bggTimer = setTimeout(processBggQueue, 100); // 100ms 間隔
+  });
+}
+
+async function fetchBggViaFunction(bggId) {
+  try {
+    // Netlify Function を呼ぶ (サーバーサイドでBGGにアクセス)
+    const res = await fetch(
+      `/.netlify/functions/bgg-image?id=${bggId}`,
+      { signal: AbortSignal.timeout(12000) }
+    );
+    if (!res.ok) return '';
+    const data = await res.json();
+    return data.url || '';
+  } catch {
+    return '';
+  }
+}
+
+// =====================================================
+// 遅延読み込み (IntersectionObserver)
+// ─ 画面に入ったカードだけ画像を取得する
+// =====================================================
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    if (el.dataset.loaded) return;
+    el.dataset.loaded = '1';
+    observer.unobserve(el);
+    if (el.dataset.driveUrl) {
+      applyImage(el, el.dataset.driveUrl);
+    } else if (el.dataset.bggId) {
+      enqueueBgg(el.dataset.bggId, url => {
+        if (url) applyImage(el, url);
+        else showPlaceholder(el);
+      });
+    }
+  });
+}, { rootMargin: '200px' });
+
+function applyImage(imgEl, url) {
+  imgEl.src = url;
+  imgEl.onload  = () => { imgEl.classList.remove('img-loading'); imgEl.classList.add('img-loaded'); };
+  imgEl.onerror = () => showPlaceholder(imgEl);
+}
+function showPlaceholder(imgEl) {
+  imgEl.style.display = 'none';
+  const ph = imgEl.parentElement?.querySelector('.card-img-placeholder');
+  if (ph) ph.style.display = 'flex';
+}
+
+// =====================================================
+// ライトボックス
+// =====================================================
+const lbOverlay = document.getElementById('lbOverlay');
+const lbInner   = document.getElementById('lbInner');
+const lbImg     = document.getElementById('lbImg');
+const lbTitle   = document.getElementById('lbTitle');
+const lbFavStar = document.getElementById('lbFavStar');
+const lbTags    = document.getElementById('lbTags');
+const lbIntro   = document.getElementById('lbIntro');
+const lbLinks   = document.getElementById('lbLinks');
+const diffTips  = { ライト:'誰でもすぐ遊べる', ミドル:'少し慣れが必要', ヘビー:'じっくり向き合うゲーム' };
+
+function openLightbox(game, imgSrc) {
+  lbImg.src = imgSrc;
+  lbImg.alt = game.title;
+  lbTitle.textContent = game.title;
+  lbFavStar.style.display = game.fav ? 'inline' : 'none';
+
+  lbTags.innerHTML = '';
+  const mkTag = (cls, text) => {
+    const s = document.createElement('span');
+    s.className = 'tag ' + cls; s.textContent = text;
+    lbTags.appendChild(s);
+  };
+  if (game.cat)  mkTag('tag-cat-' + game.cat.replace(/\s/g,''), game.cat);
+  if (game.diff) mkTag('tag-diff-' + game.diff, game.diff + (diffTips[game.diff] ? ' — ' + diffTips[game.diff] : ''));
+  if (game.lang === 'あり') {
+    const s = document.createElement('span');
+    s.className = 'lang-badge'; s.textContent = '言語依存あり';
+    lbTags.appendChild(s);
+  }
+
+  if (game.intro) {
+    lbIntro.className = 'lb-intro';
+    lbIntro.textContent = game.intro;
+  } else {
+    lbIntro.className = 'lb-intro-empty';
+    lbIntro.textContent = '紹介文は準備中です';
+  }
+
+  lbLinks.innerHTML = '';
+  const addLink = (href, text, cls) => {
+    const a = document.createElement('a');
+    a.href = href; a.target = '_blank'; a.rel = 'noopener';
+    a.className = 'lb-link' + (cls ? ' ' + cls : '');
+    a.textContent = text;
+    lbLinks.appendChild(a);
+  };
+  if (game.bodoge) addLink(game.bodoge, '📋 紹介ページ');
+  if (game.bgg)    addLink(game.bgg,    '🎲 BGG');
+  if (game.manual) addLink(game.manual, '📄 説明書', 'lb-link-manual');
+
+  lbOverlay.classList.add('lb-open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  lbOverlay.classList.remove('lb-open');
+  document.body.style.overflow = '';
+  setTimeout(() => { lbImg.src = ''; }, 250);
+}
+
+lbOverlay.addEventListener('click', e => { if (!lbInner.contains(e.target)) closeLightbox(); });
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// 箱絵クリックでライトボックスを開く
+document.addEventListener('click', e => {
+  const wrap = e.target.closest('.card-image-wrap, .tbl-img-wrap');
+  if (!wrap) return;
+  const img = wrap.querySelector('img.img-loaded');
+  if (!img) return;
+  const game = GAMES.find(g => g.no === parseInt(wrap.dataset.no));
+  if (game) openLightbox(game, img.src);
+});
+
+// =====================================================
+// トースト（初回訪問のみ表示）
+// =====================================================
+function showToast() {
+  if (localStorage.getItem('toast_v2')) return;
+  const el = document.getElementById('toast');
+  setTimeout(() => {
+    el.classList.add('toast-show');
+    setTimeout(() => el.classList.remove('toast-show'), 4000);
+    localStorage.setItem('toast_v2', '1');
+  }, 800);
+}
+
+// =====================================================
+// フィルター・ソート
+// =====================================================
+function timeToMax(t) { if (!t) return 0;    const m = t.match(/\d+/g); return m ? parseInt(m[m.length-1]) : 0; }
+function timeToMin(t) { if (!t) return 9999; const m = t.match(/\d+/);  return m ? parseInt(m[0]) : 9999; }
+function dateKey(d)   { return d ? d.replace(/\//g, '-') : ''; }
+
+let currentView = 'gallery', filtered = [...GAMES];
+
+function updateCounts() {
+  document.getElementById('cnt-bg').textContent = GAMES.filter(g=>g.cat==='ボードゲーム').length;
+  document.getElementById('cnt-pg').textContent = GAMES.filter(g=>g.cat==='パーティゲーム').length;
+  document.getElementById('cnt-mm').textContent = GAMES.filter(g=>g.cat==='マーダーミステリー').length;
+}
+
+function applyAll() {
+  const q       = document.getElementById('searchInput').value.toLowerCase();
+  const cat     = document.getElementById('filterCat').value;
+  const diff    = document.getElementById('filterDiff').value;
+  const players = parseInt(document.getElementById('filterPlayers').value) || 0;
+  const tr      = document.getElementById('filterTime').value;
+  const genre   = document.getElementById('filterGenre').value;
+  const sk      = document.getElementById('sortKey').value;
+
+  filtered = GAMES.filter(g => {
+    if (q && !g.title.toLowerCase().includes(q) && !g.genre.join(' ').toLowerCase().includes(q)) return false;
+    if (cat  && g.cat  !== cat)  return false;
+    if (diff && g.diff !== diff) return false;
+    if (players) {
+      if (players <= 7) { if (g.min > players || g.max < players) return false; }
+      else { if (g.max < 8) return false; }
+    }
+    if (tr) {
+      const mx = timeToMax(g.time), mn = timeToMin(g.time);
+      if (tr==='s1' && mx>15)           return false;
+      if (tr==='s2' && (mx<=15||mn>=30)) return false;
+      if (tr==='s3' && (mx<30 ||mn>=60)) return false;
+      if (tr==='s4' && (mx<60 ||mn>=90)) return false;
+      if (tr==='s5' && (mx<90 ||mn>=120))return false;
+      if (tr==='s6' && mx<120)           return false;
+    }
+    if (genre && !g.genre.includes(genre)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    switch (document.getElementById('sortKey').value) {
+      case 'no':         return a.no - b.no;
+      case 'added_desc': return dateKey(b.added).localeCompare(dateKey(a.added)) || a.no-b.no;
+      case 'added_asc':  return dateKey(a.added).localeCompare(dateKey(b.added)) || a.no-b.no;
+      case 'title':      return a.title.localeCompare(b.title, 'ja');
+      case 'time_asc':   return timeToMin(a.time) - timeToMin(b.time) || a.no-b.no;
+      case 'time_desc':  return timeToMax(b.time) - timeToMax(a.time) || a.no-b.no;
+      default:           return a.no - b.no;
+    }
+  });
+
+  document.getElementById('resultCount').textContent = filtered.length + ' 件';
+  document.getElementById('emptyMsg').style.display = filtered.length === 0 ? 'block' : 'none';
+  if (currentView === 'gallery') renderGallery(); else renderTable();
+}
+
+// =====================================================
+// SVG
+// =====================================================
+function lnkSvg() { return '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1h4v4M11 1L5 7M4.5 3H2a1 1 0 00-1 1v6a1 1 0 001 1h6a1 1 0 001-1V7.5"/></svg>'; }
+function zoomSvg(){ return '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l3 3M7 5v4M5 7h4"/></svg>'; }
+function phSvg()  { return '<svg viewBox="0 0 48 48" fill="none"><rect x="8" y="12" width="32" height="24" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="18" cy="20" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 30l9-7 7 6 5-4 11 9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'; }
+
+// =====================================================
+// カード生成
+// =====================================================
+function makeCard(g) {
+  const wrap = document.createElement('div');
+  wrap.className = 'game-card';
+  const isMM   = g.cat === 'マーダーミステリー';
+  const genres = isMM ? '' : g.genre.slice(0, 3).map(t => `<span class="genre-tag">${t}</span>`).join('');
+  const diffTag= g.diff ? `<span class="tag tag-diff-${g.diff}" data-tip="${diffTips[g.diff]||''}">${g.diff}</span>` : '';
+  const langB  = g.lang === 'あり' ? '<span class="lang-badge">言語依存</span>' : '';
+  const pStr   = (g.min!=null && g.max!=null) ? `${g.min}〜${g.max}人` : '—';
+  const hasImg = g.img || g.bgg_id;
+  const noStr  = '#' + String(g.no).padStart(2, '0');
+  const favHtml= g.fav ? '<span class="card-fav-star">★</span>' : '';
+
+  wrap.innerHTML =
+    `<div class="card-image-wrap" data-no="${g.no}">`
+    + (hasImg
+        ? `<img class="img-loading" alt="${g.title}"><div class="card-img-placeholder" style="display:none">${phSvg()}<span>画像なし</span></div>`
+        : `<div class="card-img-placeholder">${phSvg()}<span>画像なし</span></div>`)
+    + `<div class="img-zoom-hint">${zoomSvg()}</div></div>`
+    + `<div class="card-body">`
+    + `<div class="card-header"><div class="card-title">${g.title}</div>`
+    + `<div class="card-no-wrap">${favHtml}<span class="card-no">${noStr}</span></div></div>`
+    + `<div class="card-meta"><span class="tag tag-cat-${g.cat.replace(/\s/g,'')}">${g.cat}</span>${diffTag}${langB}</div>`
+    + `<div class="card-info">`
+    + `<div class="info-item"><svg class="info-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>${pStr}</div>`
+    + `<div class="info-item"><svg class="info-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>${g.time||'—'}</div>`
+    + (g.opt ? `<div class="info-item" style="color:var(--text-faint);font-size:10px">最適 ${g.opt}</div>` : '')
+    + `</div>`
+    + (genres ? `<div class="genre-list">${genres}</div>` : '')
+    + `<div class="card-footer">`
+    + (g.bodoge ? `<a class="card-link" href="${g.bodoge}" target="_blank" rel="noopener">紹介 ${lnkSvg()}</a>` : '')
+    + (g.bgg    ? `<a class="card-link" href="${g.bgg}"    target="_blank" rel="noopener">BGG ${lnkSvg()}</a>` : '')
+    + (g.manual ? `<a class="card-link card-link-manual" href="${g.manual}" target="_blank" rel="noopener">📄 説明書</a>` : '')
+    + `</div></div>`;
+
+  if (hasImg) {
+    const imgEl = wrap.querySelector('img');
+    if (g.img)     imgEl.dataset.driveUrl = g.img;
+    else if (g.bgg_id) imgEl.dataset.bggId = g.bgg_id;
+    observer.observe(imgEl);
+  }
+  return wrap;
+}
+
+// =====================================================
+// レンダリング
+// =====================================================
+function renderGallery() {
+  const el = document.getElementById('galleryView');
+  el.innerHTML = '';
+  if (!filtered.length) return;
+  const sk     = document.getElementById('sortKey').value;
+  const isDate = sk === 'added_desc' || sk === 'added_asc';
+  const frag   = document.createDocumentFragment();
+  const addLbl = text => {
+    const l = document.createElement('div');
+    l.className = 'section-label'; l.textContent = text; frag.appendChild(l);
+  };
+  if (!isDate) {
+    const catOrder = ['ボードゲーム', 'パーティゲーム', 'マーダーミステリー'];
+    const groups   = {}; catOrder.forEach(c => groups[c] = []);
+    filtered.forEach(g => { if (groups[g.cat]) groups[g.cat].push(g); });
+    catOrder.forEach(cat => {
+      const list = groups[cat]; if (!list.length) return;
+      addLbl(`${cat}（${list.length}）`);
+      list.forEach(g => frag.appendChild(makeCard(g)));
+    });
+  } else {
+    const dg = {};
+    filtered.forEach(g => { const d = g.added||'日付不明'; if (!dg[d]) dg[d]=[]; dg[d].push(g); });
+    Object.keys(dg).sort((a,b) => sk==='added_desc'
+      ? dateKey(b).localeCompare(dateKey(a)) : dateKey(a).localeCompare(dateKey(b))
+    ).forEach(d => {
+      addLbl(`追加日：${d}（${dg[d].length}件）`);
+      dg[d].forEach(g => frag.appendChild(makeCard(g)));
+    });
+  }
+  el.appendChild(frag);
+}
+
+function renderTable() {
+  const body = document.getElementById('tableBody');
+  body.innerHTML = '';
+  if (!filtered.length) return;
+  const frag = document.createDocumentFragment();
+  filtered.forEach(g => {
+    const isMM   = g.cat === 'マーダーミステリー';
+    const hasImg = g.img || g.bgg_id;
+    const noStr  = '#' + String(g.no).padStart(2, '0');
+    const favHtml= g.fav ? '<span class="tbl-fav-star">★</span>' : '';
+    const tr     = document.createElement('tr');
+    tr.innerHTML =
+      `<td><div class="tbl-img-wrap" data-no="${g.no}">${hasImg ? `<img class="tbl-img img-loading" alt="${g.title}">` : ''}</div></td>`
+      + `<td><div class="tbl-no-wrap">${favHtml}<span style="color:var(--text-faint);font-size:11px">${noStr}</span></div></td>`
+      + `<td class="title-cell">${g.title}</td>`
+      + `<td><span class="tag tag-cat-${g.cat.replace(/\s/g,'')}" style="font-size:10px;padding:2px 6px">${g.cat}</span></td>`
+      + `<td>${g.diff ? `<span class="tag tag-diff-${g.diff}" data-tip="${diffTips[g.diff]||''}" style="font-size:10px;padding:2px 6px">${g.diff}</span>` : '<span style="color:var(--text-faint)">—</span>'}</td>`
+      + `<td style="text-align:center;color:var(--text-muted)">${g.min??'—'}</td>`
+      + `<td style="text-align:center;color:var(--text-muted)">${g.max??'—'}</td>`
+      + `<td style="color:var(--text-muted);font-size:11px">${g.opt||'—'}</td>`
+      + `<td style="color:var(--text-muted);font-size:11px">${g.time||'—'}</td>`
+      + `<td class="genre-cell">${isMM?'':g.genre.map(t=>`<span class="genre-tag" style="margin:1px 2px">${t}</span>`).join('')}</td>`
+      + `<td style="color:var(--text-faint);font-size:11px">${g.added||'—'}</td>`
+      + `<td style="white-space:nowrap">`
+      + (g.bodoge ? `<a href="${g.bodoge}" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;margin-right:4px" title="紹介ページ">📋</a>` : '')
+      + (g.bgg    ? `<a href="${g.bgg}"    target="_blank" rel="noopener" style="font-size:11px;color:var(--text-muted);text-decoration:none;margin-right:4px" title="BGG">🎲</a>` : '')
+      + (g.manual ? `<a href="${g.manual}" target="_blank" rel="noopener" style="font-size:11px;color:#4caf50;text-decoration:none" title="説明書">📄</a>` : '')
+      + `</td>`;
+    if (hasImg) {
+      const imgEl = tr.querySelector('img');
+      if (g.img)         imgEl.dataset.driveUrl = g.img;
+      else if (g.bgg_id) imgEl.dataset.bggId    = g.bgg_id;
+      observer.observe(imgEl);
+    }
+    frag.appendChild(tr);
+  });
+  body.appendChild(frag);
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('galleryView').style.display = v==='gallery' ? 'grid'  : 'none';
+  document.getElementById('tableView').style.display   = v==='table'   ? 'block' : 'none';
+  document.getElementById('btnGallery').classList.toggle('active', v==='gallery');
+  document.getElementById('btnTable').classList.toggle('active',   v==='table');
+  applyAll();
+}
+
+['searchInput','filterCat','filterDiff','filterPlayers','filterTime','filterGenre','sortKey'].forEach(id => {
+  document.getElementById(id).addEventListener(id==='searchInput' ? 'input' : 'change', applyAll);
+});
+
+updateCounts();
+applyAll();
+showToast();
+</script>
+</body>
+</html>
