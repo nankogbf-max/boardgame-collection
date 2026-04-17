@@ -292,11 +292,9 @@ const GAMES = [{"no":1,"title":"ワケアリガールコレクション","cat":"
 
 // =====================================================
 // 画像キャッシュ (LocalStorage・24時間)
-// ─ Netlify Function が CDN にもキャッシュするため
-//   同一ブラウザでは Function すら呼ばれない二重構造
 // =====================================================
 const CACHE_KEY = 'bgg_img_v3';
-const CACHE_TTL = 86400000; // 24h
+const CACHE_TTL = 86400000;
 
 function loadCache() {
   try {
@@ -315,9 +313,9 @@ const imgCache = loadCache();
 
 // =====================================================
 // BGG画像取得キュー
-// ─ Netlify Function (/.netlify/functions/bgg-image?id=XXX)
-//   にリクエストを送り、サーバー側でBGGへアクセスする。
-//   100ms 間隔で順番にリクエストし、BGGへの負荷を抑制。
+// ─ ページロード時に全件をキューに入れ、200ms間隔で順次取得。
+//   53件 × 200ms ≒ 約11秒で全件完了。
+//   Netlify CDN が24時間キャッシュするため2回目以降はBGGへ負荷なし。
 // =====================================================
 const bggQueue = [];
 let bggTimer = null;
@@ -334,25 +332,25 @@ function enqueueBgg(bggId, callback) {
 function processBggQueue() {
   if (!bggQueue.length) { bggTimer = null; return; }
   const { bggId, callback } = bggQueue.shift();
+  // キャッシュに入っていれば即返す
   if (imgCache[bggId] !== undefined) {
     callback(imgCache[bggId].url || '');
-    bggTimer = setTimeout(processBggQueue, 50);
+    bggTimer = setTimeout(processBggQueue, 10);
     return;
   }
   fetchBggViaFunction(bggId).then(url => {
     imgCache[bggId] = { url, ts: Date.now() };
     saveCache(imgCache);
     callback(url);
-    bggTimer = setTimeout(processBggQueue, 100); // 100ms 間隔
+    bggTimer = setTimeout(processBggQueue, 200); // 200ms間隔
   });
 }
 
 async function fetchBggViaFunction(bggId) {
   try {
-    // Netlify Function を呼ぶ (サーバーサイドでBGGにアクセス)
     const res = await fetch(
-      `/.netlify/functions/bgg-image?id=${bggId}`,
-      { signal: AbortSignal.timeout(12000) }
+      '/.netlify/functions/bgg-image?id=' + bggId,
+      { signal: AbortSignal.timeout ? AbortSignal.timeout(25000) : undefined }
     );
     if (!res.ok) return '';
     const data = await res.json();
@@ -362,28 +360,7 @@ async function fetchBggViaFunction(bggId) {
   }
 }
 
-// =====================================================
-// 遅延読み込み (IntersectionObserver)
-// ─ 画面に入ったカードだけ画像を取得する
-// =====================================================
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    const el = entry.target;
-    if (el.dataset.loaded) return;
-    el.dataset.loaded = '1';
-    observer.unobserve(el);
-    if (el.dataset.driveUrl) {
-      applyImage(el, el.dataset.driveUrl);
-    } else if (el.dataset.bggId) {
-      enqueueBgg(el.dataset.bggId, url => {
-        if (url) applyImage(el, url);
-        else showPlaceholder(el);
-      });
-    }
-  });
-}, { rootMargin: '200px' });
-
+// 画像をimg要素にセット（キューを経由せず直接適用）
 function applyImage(imgEl, url) {
   imgEl.src = url;
   imgEl.onload  = () => { imgEl.classList.remove('img-loading'); imgEl.classList.add('img-loaded'); };
@@ -393,6 +370,19 @@ function showPlaceholder(imgEl) {
   imgEl.style.display = 'none';
   const ph = imgEl.parentElement?.querySelector('.card-img-placeholder');
   if (ph) ph.style.display = 'flex';
+}
+
+// ページロード後に全BGGカードをまとめてキューへ投入
+function enqueueAllBggImages() {
+  document.querySelectorAll('img[data-bgg-id]').forEach(imgEl => {
+    if (imgEl.dataset.queued) return;
+    imgEl.dataset.queued = '1';
+    const bggId = imgEl.dataset.bggId;
+    enqueueBgg(bggId, url => {
+      if (url) applyImage(imgEl, url);
+      else showPlaceholder(imgEl);
+    });
+  });
 }
 
 // =====================================================
@@ -593,9 +583,13 @@ function makeCard(g) {
 
   if (hasImg) {
     const imgEl = wrap.querySelector('img');
-    if (g.img)     imgEl.dataset.driveUrl = g.img;
-    else if (g.bgg_id) imgEl.dataset.bggId = g.bgg_id;
-    observer.observe(imgEl);
+    if (g.img) {
+      // Google Drive画像は即適用
+      applyImage(imgEl, g.img);
+    } else if (g.bgg_id) {
+      // BGGはdata属性だけ設定。enqueueAllBggImages()がまとめてキューへ投入する
+      imgEl.dataset.bggId = g.bgg_id;
+    }
   }
   return wrap;
 }
@@ -634,6 +628,8 @@ function renderGallery() {
     });
   }
   el.appendChild(frag);
+  // レンダリング後にBGG画像を一括キュー投入
+  setTimeout(enqueueAllBggImages, 0);
 }
 
 function renderTable() {
@@ -666,13 +662,17 @@ function renderTable() {
       + `</td>`;
     if (hasImg) {
       const imgEl = tr.querySelector('img');
-      if (g.img)         imgEl.dataset.driveUrl = g.img;
-      else if (g.bgg_id) imgEl.dataset.bggId    = g.bgg_id;
-      observer.observe(imgEl);
+      if (g.img) {
+        applyImage(imgEl, g.img);
+      } else if (g.bgg_id) {
+        imgEl.dataset.bggId = g.bgg_id;
+      }
     }
     frag.appendChild(tr);
   });
   body.appendChild(frag);
+  // レンダリング後にBGG画像を一括キュー投入
+  setTimeout(enqueueAllBggImages, 0);
 }
 
 function setView(v) {
