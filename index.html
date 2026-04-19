@@ -48,6 +48,9 @@ select#sortKey{min-width:130px}
 .view-btn.active{background:var(--surface2);color:var(--text);font-weight:500}
 .view-btn:hover:not(.active){background:var(--bg)}
 .result-count{font-size:12px;color:var(--text-faint);white-space:nowrap;align-self:center}
+.reset-btn{padding:6px 11px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface);font-family:var(--font);font-size:12px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s,border-color .15s,color .15s;flex-shrink:0}
+.reset-btn:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.reset-btn svg{flex-shrink:0}
 .content{padding:20px 32px 60px;max-width:1600px;margin:0 auto}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
 .game-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:border-color .18s,box-shadow .18s}
@@ -125,6 +128,11 @@ td.genre-cell{white-space:normal}
 .lb-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
 .lb-intro{color:rgba(255,255,255,.88);font-size:12px;line-height:1.7;margin-bottom:10px}
 .lb-intro-empty{color:rgba(255,255,255,.38);font-size:11px;font-style:italic;margin-bottom:10px}
+.lb-meta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:7px}
+.lb-meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.75)}
+.lb-meta-item svg{width:12px;height:12px;opacity:.7;flex-shrink:0}
+.lb-genres{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.lb-genre-tag{font-size:10px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.12);border-radius:4px;padding:2px 7px;border:1px solid rgba(255,255,255,.15)}
 .lb-links{display:flex;gap:7px;flex-wrap:wrap}
 .lb-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.25);text-decoration:none;color:rgba(255,255,255,.85);background:rgba(255,255,255,.10);transition:background .15s}
 .lb-link:hover{background:rgba(255,255,255,.22)}
@@ -133,6 +141,36 @@ td.genre-cell{white-space:normal}
 .lb-close{position:absolute;top:-12px;right:-12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:background .15s;z-index:1}
 .lb-close:hover{background:rgba(255,255,255,.28)}
 .lb-hint{font-size:11px;color:rgba(255,255,255,.35)}
+/* ナビゲーション */
+.lb-nav{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:min(90vw,860px);position:relative}
+.lb-nav-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;transition:background .15s;flex-shrink:0}
+.lb-nav-btn:hover{background:rgba(255,255,255,.28)}
+.lb-nav-btn:disabled{opacity:.25;cursor:default}
+.lb-nav-center{flex:1;text-align:center}
+.lb-wrap-hint{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;min-height:14px;text-align:center}
+/* ランダムボタン */
+.random-btn{padding:6px 11px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface);font-family:var(--font);font-size:12px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s,border-color .15s,color .15s;flex-shrink:0}
+.random-btn:hover{background:#fff8e1;border-color:#c8960c;color:#7a5800}
+.random-btn svg{flex-shrink:0}
+/* ランダム結果ポップアップ */
+.random-popup{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.random-popup.rp-open{opacity:1;pointer-events:all}
+.random-popup-inner{background:var(--surface);border-radius:var(--radius-lg);padding:28px 32px;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.rp-label{font-size:11px;color:var(--text-faint);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
+.rp-title{font-family:var(--font-serif);font-size:22px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:8px}
+.rp-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.rp-sub span{display:flex;align-items:center;gap:4px}
+.rp-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.rp-btn-main{padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.rp-btn-main:hover{opacity:.88}
+.rp-btn-again{padding:9px 20px;background:var(--surface2);color:var(--text);border:1px solid var(--border-hover);border-radius:var(--radius);font-family:var(--font);font-size:13px;cursor:pointer;transition:background .15s}
+.rp-btn-again:hover{background:var(--bg)}
+.rp-btn-close{padding:9px 16px;background:none;color:var(--text-faint);border:none;font-family:var(--font);font-size:12px;cursor:pointer}
+/* ジャンルタグクリック */
+.lb-genre-tag{cursor:pointer;transition:background .15s,border-color .15s}
+.lb-genre-tag:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.4)}
+.lb-time-tag{font-size:10px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.12);border-radius:4px;padding:2px 7px;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:background .15s,border-color .15s}
+.lb-time-tag:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.4)}
 /* トースト */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,28,26,.9);color:#fff;font-size:12px;padding:10px 18px;border-radius:100px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:2000;display:flex;align-items:center;gap:7px}
 .toast.toast-show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -148,22 +186,49 @@ td.genre-cell{white-space:normal}
 <div class="lb-overlay" id="lbOverlay" role="dialog" aria-modal="true">
   <div class="lb-inner" id="lbInner">
     <button class="lb-close" id="lbClose" aria-label="閉じる">&#x2715;</button>
-    <div class="lb-img-wrap"><img id="lbImg" src="" alt=""></div>
-    <div class="lb-info">
-      <div class="lb-title-row">
-        <div class="lb-title" id="lbTitle"></div>
-        <div class="lb-fav-star" id="lbFavStar" style="display:none">★</div>
+    <div class="lb-nav">
+      <div style="text-align:center">
+        <button class="lb-nav-btn" id="lbPrev" aria-label="前のゲーム">&#8592;</button>
+        <div class="lb-wrap-hint" id="lbWrapHintLeft"></div>
       </div>
-      <div class="lb-tags" id="lbTags"></div>
-      <div id="lbIntro"></div>
-      <div class="lb-links" id="lbLinks"></div>
+      <div class="lb-nav-center">
+        <div class="lb-img-wrap"><img id="lbImg" src="" alt=""></div>
+        <div class="lb-info">
+          <div class="lb-title-row">
+            <div class="lb-title" id="lbTitle"></div>
+            <div class="lb-fav-star" id="lbFavStar" style="display:none">★</div>
+          </div>
+          <div class="lb-tags" id="lbTags"></div>
+          <div class="lb-meta" id="lbMeta"></div>
+          <div class="lb-genres" id="lbGenres"></div>
+          <div id="lbIntro"></div>
+          <div class="lb-links" id="lbLinks"></div>
+        </div>
+        <div class="lb-hint">画像の外側をクリック・Escキーで閉じる</div>
+      </div>
+      <div style="text-align:center">
+        <button class="lb-nav-btn" id="lbNext" aria-label="次のゲーム">&#8594;</button>
+        <div class="lb-wrap-hint" id="lbWrapHintRight"></div>
+      </div>
     </div>
-    <div class="lb-hint">画像の外側をクリック・Escキーで閉じる</div>
   </div>
 </div>
 <div class="toast" id="toast">
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
   箱絵をタップすると詳細が見られます
+</div>
+<!-- ランダムポップアップ -->
+<div class="random-popup" id="randomPopup">
+  <div class="random-popup-inner">
+    <div class="rp-label">🎲 おまかせ選出</div>
+    <div class="rp-title" id="rpTitle"></div>
+    <div class="rp-sub" id="rpSub"></div>
+    <div class="rp-buttons">
+      <button class="rp-btn-main" id="rpDetail">詳細を見る</button>
+      <button class="rp-btn-again" id="rpAgain">もう一度</button>
+      <button class="rp-btn-close" id="rpClose">閉じる</button>
+    </div>
+  </div>
 </div>
 <header class="page-header">
   <div class="header-top">
@@ -223,6 +288,14 @@ td.genre-cell{white-space:normal}
       <option value="time_asc">時間 短い順</option>
       <option value="time_desc">時間 長い順</option>
     </select>
+    <button class="random-btn" id="randomBtn" title="現在の絞り込み結果からランダム選出">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h2l3 8h4l3-8h2"/><path d="M6 8h4"/></svg>
+      おまかせ
+    </button>
+    <button class="reset-btn" id="resetBtn" onclick="resetFilters()" title="絞り込みをリセット">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 2.5A7 7 0 1 0 14 8" stroke-linecap="round"/><polyline points="10,1 14,3 12,7" fill="currentColor" stroke="none"/></svg>
+      リセット
+    </button>
     <div class="view-toggle">
       <button class="view-btn active" id="btnGallery" onclick="setView('gallery')">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor"/><rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor"/><rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor"/><rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor"/></svg>
@@ -333,41 +406,190 @@ const lbIntro=document.getElementById('lbIntro');
 const lbLinks=document.getElementById('lbLinks');
 const diffTips={ライト:'誰でもすぐ遊べる',ミドル:'少し慣れが必要',ヘビー:'じっくり向き合うゲーム'};
 
-function openLightbox(game,src){
-  lbImg.src=src;lbImg.alt=game.title;
-  lbTitle.textContent=game.title;
-  lbFavStar.style.display=game.fav?'inline':'none';
-  lbTags.innerHTML='';
-  const mkTag=(cls,text)=>{const s=document.createElement('span');s.className='tag '+cls;s.textContent=text;lbTags.appendChild(s);};
-  if(game.cat) mkTag('tag-cat-'+game.cat.replace(/\s/g,''),game.cat);
-  if(game.diff) mkTag('tag-diff-'+game.diff,game.diff+(diffTips[game.diff]?' — '+diffTips[game.diff]:''));
-  if(game.lang==='あり'){const s=document.createElement('span');s.className='lang-badge';s.textContent='言語依存あり';lbTags.appendChild(s);}
-  if(game.intro){lbIntro.className='lb-intro';lbIntro.textContent=game.intro;}
-  else{lbIntro.className='lb-intro-empty';lbIntro.textContent='紹介文は準備中です';}
-  lbLinks.innerHTML='';
-  const addLink=(href,text,cls)=>{const a=document.createElement('a');a.href=href;a.target='_blank';a.rel='noopener';a.className='lb-link'+(cls?' '+cls:'');a.textContent=text;lbLinks.appendChild(a);};
-  if(game.bodoge)addLink(game.bodoge,'📋 紹介ページ');
-  if(game.bgg)   addLink(game.bgg,   '🎲 BGG');
-  if(game.manual)addLink(game.manual,'📄 説明書','lb-link-manual');
+// 現在ライトボックスで表示中のfiltered内インデックス
+let currentLbIndex = -1;
+
+function openLightbox(game, src) {
+  currentLbIndex = filtered.findIndex(g => g.no === game.no);
+
+  lbImg.src = src; lbImg.alt = game.title;
+  lbTitle.textContent = game.title;
+  lbFavStar.style.display = game.fav ? 'inline' : 'none';
+  lbTags.innerHTML = '';
+  const mkTag = (cls, text) => { const s = document.createElement('span'); s.className = 'tag ' + cls; s.textContent = text; lbTags.appendChild(s); };
+  if (game.cat) mkTag('tag-cat-' + game.cat.replace(/\s/g, ''), game.cat);
+  if (game.diff) mkTag('tag-diff-' + game.diff, game.diff + (diffTips[game.diff] ? ' — ' + diffTips[game.diff] : ''));
+  if (game.lang === 'あり') { const s = document.createElement('span'); s.className = 'lang-badge'; s.textContent = '言語依存あり'; lbTags.appendChild(s); }
+
+  // 人数・時間・最適人数
+  const lbMeta = document.getElementById('lbMeta');
+  lbMeta.innerHTML = '';
+  const addMeta = (svg, text) => { if (!text || text === '—') return; const d = document.createElement('div'); d.className = 'lb-meta-item'; d.innerHTML = svg + '<span>' + text + '</span>'; lbMeta.appendChild(d); };
+  const personSvg = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>';
+  const clockSvg  = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>';
+  const starSvg   = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>';
+  addMeta(personSvg, playerStr(game.min, game.max));
+
+  // 時間タグ（クリックで近い時間帯に絞り込む）
+  if (game.time) {
+    const tspan = document.createElement('span');
+    tspan.className = 'lb-time-tag';
+    tspan.textContent = '⏱ ' + game.time;
+    tspan.title = 'この時間帯で絞り込む';
+    tspan.addEventListener('click', () => applyTimeFilterFromLb(game.time));
+    lbMeta.appendChild(tspan);
+  }
+  if (game.opt) addMeta(starSvg, '最適 ' + game.opt);
+
+  // ジャンルタグ（クリックで絞り込み）
+  const lbGenres = document.getElementById('lbGenres');
+  lbGenres.innerHTML = '';
+  if (game.cat !== 'マーダーミステリー' && game.genre && game.genre.length) {
+    game.genre.forEach(t => {
+      const s = document.createElement('span');
+      s.className = 'lb-genre-tag';
+      s.textContent = t;
+      s.title = 'このジャンルで絞り込む';
+      s.addEventListener('click', () => {
+        document.getElementById('filterGenre').value = t;
+        closeLightbox();
+        applyAll();
+      });
+      lbGenres.appendChild(s);
+    });
+  }
+
+  if (game.intro) { lbIntro.className = 'lb-intro'; lbIntro.textContent = game.intro; }
+  else { lbIntro.className = 'lb-intro-empty'; lbIntro.textContent = '紹介文は準備中です'; }
+
+  lbLinks.innerHTML = '';
+  const addLink = (href, text, cls) => { const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.className = 'lb-link' + (cls ? ' ' + cls : ''); a.textContent = text; lbLinks.appendChild(a); };
+  if (game.bodoge) addLink(game.bodoge, '📋 紹介ページ');
+  if (game.bgg)    addLink(game.bgg,    '🎲 BGG');
+  if (game.manual) addLink(game.manual, '📄 説明書', 'lb-link-manual');
+
+  updateNavHints();
   lbOverlay.classList.add('lb-open');
-  document.body.style.overflow='hidden';
+  document.body.style.overflow = 'hidden';
 }
-function closeLightbox(){
+
+// 時間タグクリック：ゲームの時間と重なる（端点除く）プリセットを選択
+function applyTimeFilterFromLb(timeStr) {
+  const nums = timeStr.match(/\d+/g);
+  if (!nums) return;
+  const mn = parseInt(nums[0]);
+  const mx = parseInt(nums[nums.length - 1]);
+  if (mn === mx) return; // 固定時間は対象外
+  const presets = [
+    {val:'s1',lo:0,  hi:15},
+    {val:'s2',lo:15, hi:30},
+    {val:'s3',lo:30, hi:60},
+    {val:'s4',lo:60, hi:90},
+    {val:'s5',lo:90, hi:120},
+    {val:'s6',lo:120,hi:9999},
+  ];
+  const match = presets.find(p => p.lo < mx && p.hi > mn);
+  if (match) { document.getElementById('filterTime').value = match.val; closeLightbox(); applyAll(); }
+}
+
+// ナビゲーション折り返しヒント更新
+function updateNavHints() {
+  const total = filtered.length;
+  const hintL = document.getElementById('lbWrapHintLeft');
+  const hintR = document.getElementById('lbWrapHintRight');
+  if (!hintL || !hintR) return;
+  hintR.textContent = (total > 1 && currentLbIndex === total - 1) ? '次は最初のゲームです' : '';
+  hintL.textContent = (total > 1 && currentLbIndex === 0) ? '前は最後のゲームです' : '';
+}
+function closeLightbox() {
   lbOverlay.classList.remove('lb-open');
-  document.body.style.overflow='';
-  setTimeout(()=>{lbImg.src='';},250);
+  document.body.style.overflow = '';
+  setTimeout(() => { lbImg.src = ''; }, 250);
 }
-lbOverlay.addEventListener('click',e=>{if(!lbInner.contains(e.target))closeLightbox();});
-document.getElementById('lbClose').addEventListener('click',closeLightbox);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
-document.addEventListener('click',e=>{
-  const w=e.target.closest('.card-image-wrap,.tbl-img-wrap');
-  if(!w)return;
-  const img=w.querySelector('img.img-loaded');
-  if(!img)return;
-  const game=GAMES.find(g=>g.no===parseInt(w.dataset.no));
-  if(game)openLightbox(game,img.src);
+
+// ライトボックス内のゲームをインデックス指定で開く（画像は取得済みのものを再利用）
+function openLightboxByIndex(idx) {
+  if (!filtered.length) return;
+  // 循環
+  idx = ((idx % filtered.length) + filtered.length) % filtered.length;
+  const game = filtered[idx];
+  // 画像ソース取得（キャッシュ → img要素から）
+  let src = '';
+  if (game.img) {
+    src = game.img;
+  } else if (game.bgg_id && imgCache[game.bgg_id]) {
+    src = imgCache[game.bgg_id].url || '';
+  }
+  openLightbox(game, src);
+  // 画像が空ならBGGキューに入れて取得後に更新
+  if (!src && game.bgg_id) {
+    enqueueBgg(game.bgg_id, url => { if (url) { lbImg.src = url; } });
+  }
+}
+
+lbOverlay.addEventListener('click', e => { if (!lbInner.contains(e.target)) closeLightbox(); });
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+
+document.getElementById('lbPrev').addEventListener('click', () => {
+  openLightboxByIndex(currentLbIndex - 1);
 });
+document.getElementById('lbNext').addEventListener('click', () => {
+  openLightboxByIndex(currentLbIndex + 1);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+  if (!lbOverlay.classList.contains('lb-open')) return;
+  if (e.key === 'ArrowRight') openLightboxByIndex(currentLbIndex + 1);
+  if (e.key === 'ArrowLeft')  openLightboxByIndex(currentLbIndex - 1);
+});
+
+document.addEventListener('click', e => {
+  const w = e.target.closest('.card-image-wrap,.tbl-img-wrap');
+  if (!w) return;
+  const img = w.querySelector('img.img-loaded');
+  if (!img) return;
+  const game = GAMES.find(g => g.no === parseInt(w.dataset.no));
+  if (game) openLightbox(game, img.src);
+});
+
+// ── ランダム選出 ──
+(function(){
+  const popup  = document.getElementById('randomPopup');
+  const rpTitle= document.getElementById('rpTitle');
+  const rpSub  = document.getElementById('rpSub');
+  const rpDetail = document.getElementById('rpDetail');
+  const rpAgain  = document.getElementById('rpAgain');
+  const rpClose  = document.getElementById('rpClose');
+  let lastPicked = null;
+
+  function pickRandom() {
+    if (!filtered.length) { alert('絞り込み結果にゲームがありません'); return; }
+    const g = filtered[Math.floor(Math.random() * filtered.length)];
+    lastPicked = g;
+    rpTitle.textContent = g.title;
+    rpSub.innerHTML = '';
+    const add = (icon, text) => { if (!text) return; const s = document.createElement('span'); s.innerHTML = icon + text; rpSub.appendChild(s); };
+    add('👥 ', playerStr(g.min, g.max));
+    add('⏱ ', g.time);
+    add('🎯 ', g.diff);
+    popup.classList.add('rp-open');
+  }
+
+  document.getElementById('randomBtn').addEventListener('click', pickRandom);
+  rpAgain.addEventListener('click', pickRandom);
+  rpClose.addEventListener('click', () => popup.classList.remove('rp-open'));
+  popup.addEventListener('click', e => { if (e.target === popup) popup.classList.remove('rp-open'); });
+  rpDetail.addEventListener('click', () => {
+    popup.classList.remove('rp-open');
+    if (!lastPicked) return;
+    let src = '';
+    if (lastPicked.img) src = lastPicked.img;
+    else if (lastPicked.bgg_id && imgCache[lastPicked.bgg_id]) src = imgCache[lastPicked.bgg_id].url || '';
+    openLightbox(lastPicked, src);
+    if (!src && lastPicked.bgg_id) enqueueBgg(lastPicked.bgg_id, url => { if (url) lbImg.src = url; });
+  });
+})();
 
 // ── トースト ──
 function showToast(){
@@ -382,6 +604,14 @@ function timeToMin(t){if(!t)return 9999;const m=t.match(/\d+/);return m?parseInt
 function dateKey(d){return d?d.replace(/\//g,'-'):'';}
 let currentView='gallery',filtered=[...GAMES];
 
+function resetFilters(){
+  document.getElementById('searchInput').value='';
+  ['filterCat','filterDiff','filterPlayers','filterTime','filterGenre','sortKey'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.value=el.id==='sortKey'?'no':'';
+  });
+  applyAll();
+}
 function updateCounts(){
   document.getElementById('cnt-bg').textContent=GAMES.filter(g=>g.cat==='ボードゲーム').length;
   document.getElementById('cnt-pg').textContent=GAMES.filter(g=>g.cat==='パーティゲーム').length;
