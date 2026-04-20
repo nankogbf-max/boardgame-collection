@@ -171,6 +171,44 @@ td.genre-cell{white-space:normal}
 .lb-genre-tag:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.4)}
 .lb-time-tag{font-size:10px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.12);border-radius:4px;padding:2px 7px;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:background .15s,border-color .15s}
 .lb-time-tag:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.4)}
+
+/* ── 記録タブ ── */
+.lb-tab-bar{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.18)}
+.lb-tab{padding:6px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;font-family:var(--font)}
+.lb-tab.active{color:#fff;border-bottom-color:#fff}
+.lb-tab-panel{display:none}.lb-tab-panel.active{display:block}
+.lb-section{margin-bottom:10px}
+.lb-section label{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:4px}
+.lb-input{width:100%;padding:6px 9px;border:1px solid rgba(255,255,255,.2);border-radius:var(--radius);background:rgba(255,255,255,.08);color:#fff;font-family:var(--font);font-size:12px;outline:none;transition:border-color .15s;box-sizing:border-box}
+.lb-input:focus{border-color:rgba(255,255,255,.5)}
+.lb-input::placeholder{color:rgba(255,255,255,.3)}
+textarea.lb-input{resize:vertical;min-height:72px}
+.lb-player-rows{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.lb-player-row{display:flex;gap:6px;align-items:center}
+.lb-player-row .lb-input{flex:1}
+.lb-player-row .lb-input.score-input{width:70px;flex:none;text-align:right}
+.lb-player-row .row-label{font-size:11px;color:rgba(255,255,255,.4);width:18px;text-align:right;flex-shrink:0}
+.lb-save-btn{padding:7px 18px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;margin-top:4px}
+.lb-save-btn:hover{background:rgba(255,255,255,.3)}
+.lb-saved-msg{font-size:11px;color:rgba(150,255,150,.8);margin-left:10px;opacity:0;transition:opacity .3s}
+.lb-saved-msg.show{opacity:1}
+.lb-records-list{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
+.lb-record-item{background:rgba(255,255,255,.07);border-radius:6px;padding:8px 10px;font-size:11px;color:rgba(255,255,255,.8);line-height:1.6}
+.lb-record-item .rec-meta{color:rgba(255,255,255,.4);font-size:10px;margin-bottom:3px;display:flex;justify-content:space-between}
+.lb-record-item .rec-del{cursor:pointer;color:rgba(255,100,100,.6);font-size:10px;padding:0 2px}
+.lb-record-item .rec-del:hover{color:rgba(255,100,100,1)}
+.lb-scores-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:4px}
+.lb-scores-table td{padding:3px 6px;color:rgba(255,255,255,.8)}
+.lb-scores-table td:last-child{text-align:right;font-weight:500}
+.lb-scores-table tr:first-child td{color:rgba(255,215,0,.9);font-weight:700}
+.lb-no-record{font-size:11px;color:rgba(255,255,255,.35);font-style:italic;padding:8px 0}
+.lb-record-note{color:rgba(255,255,255,.55);font-size:11px;margin-top:3px}
+/* カードのバッジ */
+.card-record-badge{position:absolute;top:7px;left:7px;background:rgba(46,170,220,.85);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;pointer-events:none;backdrop-filter:blur(4px)}
+/* エクスポート */
+.export-bar{display:flex;gap:8px;justify-content:flex-end;padding:14px 32px 0;flex-wrap:wrap}
+.export-btn{padding:5px 12px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface);font-family:var(--font);font-size:11px;color:var(--text-muted);cursor:pointer;transition:background .15s}
+.export-btn:hover{background:var(--surface2)}
 /* トースト */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,28,26,.9);color:#fff;font-size:12px;padding:10px 18px;border-radius:100px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:2000;display:flex;align-items:center;gap:7px}
 .toast.toast-show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -198,11 +236,56 @@ td.genre-cell{white-space:normal}
             <div class="lb-title" id="lbTitle"></div>
             <div class="lb-fav-star" id="lbFavStar" style="display:none">★</div>
           </div>
-          <div class="lb-tags" id="lbTags"></div>
-          <div class="lb-meta" id="lbMeta"></div>
-          <div class="lb-genres" id="lbGenres"></div>
-          <div id="lbIntro"></div>
-          <div class="lb-links" id="lbLinks"></div>
+          <!-- タブバー -->
+          <div class="lb-tab-bar">
+            <button class="lb-tab active" data-tab="info">ゲーム情報</button>
+            <button class="lb-tab" data-tab="score">スコア</button>
+            <button class="lb-tab" data-tab="review">感想</button>
+          </div>
+          <!-- ゲーム情報タブ -->
+          <div class="lb-tab-panel active" id="lbPanelInfo">
+            <div class="lb-tags" id="lbTags"></div>
+            <div class="lb-meta" id="lbMeta"></div>
+            <div class="lb-genres" id="lbGenres"></div>
+            <div id="lbIntro"></div>
+            <div class="lb-links" id="lbLinks"></div>
+          </div>
+          <!-- スコアタブ -->
+          <div class="lb-tab-panel" id="lbPanelScore">
+            <div class="lb-records-list" id="lbScoreList"></div>
+            <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px">
+              <div class="lb-section">
+                <label>何人で遊んだか</label>
+                <input type="number" class="lb-input" id="scorePlayerCount" min="1" max="8" placeholder="例：4" style="width:80px">
+              </div>
+              <div class="lb-section">
+                <label>プレイヤーごとのスコア（HN・得点）</label>
+                <div class="lb-player-rows" id="scorePlayerRows"></div>
+              </div>
+              <div class="lb-section">
+                <label>補足メモ</label>
+                <textarea class="lb-input" id="scoreNote" placeholder="使用キャラ・種族・特記事項など" rows="2"></textarea>
+              </div>
+              <div style="display:flex;align-items:center">
+                <button class="lb-save-btn" id="scoreSaveBtn">保存</button>
+                <span class="lb-saved-msg" id="scoreSavedMsg">保存しました</span>
+              </div>
+            </div>
+          </div>
+          <!-- 感想タブ -->
+          <div class="lb-tab-panel" id="lbPanelReview">
+            <div class="lb-records-list" id="lbReviewList"></div>
+            <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px">
+              <div class="lb-section">
+                <label>感想・メモ</label>
+                <textarea class="lb-input" id="reviewText" placeholder="遊んだ感想を書いてください" rows="3"></textarea>
+              </div>
+              <div style="display:flex;align-items:center">
+                <button class="lb-save-btn" id="reviewSaveBtn">保存</button>
+                <span class="lb-saved-msg" id="reviewSavedMsg">保存しました</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="lb-hint">画像の外側をクリック・Escキーで閉じる</div>
       </div>
@@ -331,6 +414,10 @@ td.genre-cell{white-space:normal}
     </table>
   </div>
   <div class="empty" id="emptyMsg" style="display:none">条件に合うゲームが見つかりませんでした</div>
+  <div class="export-bar">
+    <button class="export-btn" onclick="exportRecords()">📥 記録をエクスポート</button>
+    <label class="export-btn" style="cursor:pointer">📤 インポート<input type="file" accept=".json" style="display:none" onchange="importRecords(event)"></label>
+  </div>
   <div class="bgg-credit">
     <a href="https://boardgamegeek.com" target="_blank" rel="noopener">
       <svg width="16" height="16" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FF5100"/><text x="50" y="68" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="52" fill="white">B</text></svg>
@@ -411,6 +498,16 @@ let currentLbIndex = -1;
 
 function openLightbox(game, src) {
   currentLbIndex = filtered.findIndex(g => g.no === game.no);
+  currentLbGameNo = game.no;
+  // タブをゲーム情報に戻す
+  document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lb-tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.lb-tab[data-tab="info"]').classList.add('active');
+  document.getElementById('lbPanelInfo').classList.add('active');
+  buildPlayerRows(0);
+  document.getElementById('scorePlayerCount').value = '';
+  document.getElementById('scoreNote').value = '';
+  document.getElementById('reviewText').value = '';
 
   lbImg.src = src; lbImg.alt = game.title;
   lbTitle.textContent = game.title;
@@ -591,6 +688,223 @@ document.addEventListener('click', e => {
   });
 })();
 
+// ── 記録機能 ──
+const REC_KEY = 'bg_records_v1';
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(REC_KEY)) || {}; } catch { return {}; }
+}
+function saveRecords(data) {
+  try { localStorage.setItem(REC_KEY, JSON.stringify(data)); } catch {}
+}
+
+// ゲームの総記録件数（スコア＋感想）
+function getRecordCount(gameNo) {
+  const data = loadRecords();
+  const d = data[gameNo];
+  if (!d) return 0;
+  return (d.scores ? d.scores.length : 0) + (d.reviews ? d.reviews.length : 0);
+}
+
+// 現在開いているゲームのNo
+let currentLbGameNo = null;
+
+// タブ切り替え
+document.querySelectorAll('.lb-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lb-tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('lbPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    if (tab === 'score') renderScoreList(currentLbGameNo);
+    if (tab === 'review') renderReviewList(currentLbGameNo);
+  });
+});
+
+// 人数変更で入力行を増減
+document.getElementById('scorePlayerCount').addEventListener('change', function() {
+  buildPlayerRows(parseInt(this.value) || 0);
+});
+
+function buildPlayerRows(count) {
+  const container = document.getElementById('scorePlayerRows');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('div');
+    row.className = 'lb-player-row';
+    row.innerHTML =
+      '<span class="row-label">' + (i + 1) + '</span>' +
+      '<input class="lb-input player-name" placeholder="HN" type="text">' +
+      '<input class="lb-input score-input player-score" placeholder="0" type="number">';
+    container.appendChild(row);
+  }
+}
+
+// スコア保存
+document.getElementById('scoreSaveBtn').addEventListener('click', () => {
+  const no = currentLbGameNo;
+  if (!no) return;
+  const count = parseInt(document.getElementById('scorePlayerCount').value) || 0;
+  const note  = document.getElementById('scoreNote').value.trim();
+  const rows  = document.querySelectorAll('#scorePlayerRows .lb-player-row');
+  const players = [];
+  rows.forEach(row => {
+    const name  = row.querySelector('.player-name').value.trim();
+    const score = parseInt(row.querySelector('.player-score').value) || 0;
+    if (name) players.push({ name, score });
+  });
+  // 得点順（降順）にソート
+  players.sort((a, b) => b.score - a.score);
+
+  const data = loadRecords();
+  if (!data[no]) data[no] = {};
+  if (!data[no].scores) data[no].scores = [];
+  data[no].scores.unshift({
+    ts: Date.now(),
+    count: count,
+    players: players,
+    note: note,
+  });
+  saveRecords(data);
+
+  // フォームリセット
+  document.getElementById('scorePlayerCount').value = '';
+  buildPlayerRows(0);
+  document.getElementById('scoreNote').value = '';
+  flashMsg('scoreSavedMsg');
+  renderScoreList(no);
+  rerenderBadges();
+});
+
+// 感想保存
+document.getElementById('reviewSaveBtn').addEventListener('click', () => {
+  const no = currentLbGameNo;
+  if (!no) return;
+  const text = document.getElementById('reviewText').value.trim();
+  if (!text) return;
+  const data = loadRecords();
+  if (!data[no]) data[no] = {};
+  if (!data[no].reviews) data[no].reviews = [];
+  data[no].reviews.unshift({ ts: Date.now(), text: text });
+  saveRecords(data);
+  document.getElementById('reviewText').value = '';
+  flashMsg('reviewSavedMsg');
+  renderReviewList(no);
+  rerenderBadges();
+});
+
+function flashMsg(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// スコア一覧描画
+function renderScoreList(no) {
+  const list = document.getElementById('lbScoreList');
+  if (!list || !no) return;
+  const data = loadRecords();
+  const scores = (data[no] && data[no].scores) || [];
+  if (!scores.length) { list.innerHTML = '<div class="lb-no-record">スコア記録はまだありません</div>'; return; }
+  list.innerHTML = scores.map((rec, idx) => {
+    const date = new Date(rec.ts).toLocaleDateString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const tableRows = rec.players.map((p, i) =>
+      '<tr><td>' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'位') + ' ' + escHtml(p.name) + '</td><td>' + p.score + '点</td></tr>'
+    ).join('');
+    const table = rec.players.length
+      ? '<table class="lb-scores-table">' + tableRows + '</table>'
+      : '';
+    const note = rec.note ? '<div class="lb-record-note">' + escHtml(rec.note) + '</div>' : '';
+    return '<div class="lb-record-item">'
+      + '<div class="rec-meta"><span>' + date + (rec.count ? '　' + rec.count + '人プレイ' : '') + '</span>'
+      + '<span class="rec-del" data-type="score" data-idx="' + idx + '">削除</span></div>'
+      + table + note + '</div>';
+  }).join('');
+  // 削除ボタン
+  list.querySelectorAll('.rec-del[data-type="score"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteRecord(no, 'scores', parseInt(btn.dataset.idx)));
+  });
+}
+
+// 感想一覧描画
+function renderReviewList(no) {
+  const list = document.getElementById('lbReviewList');
+  if (!list || !no) return;
+  const data = loadRecords();
+  const reviews = (data[no] && data[no].reviews) || [];
+  if (!reviews.length) { list.innerHTML = '<div class="lb-no-record">感想はまだありません</div>'; return; }
+  list.innerHTML = reviews.map((rec, idx) => {
+    const date = new Date(rec.ts).toLocaleDateString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    return '<div class="lb-record-item">'
+      + '<div class="rec-meta"><span>' + date + '</span><span class="rec-del" data-type="review" data-idx="' + idx + '">削除</span></div>'
+      + escHtml(rec.text) + '</div>';
+  }).join('');
+  list.querySelectorAll('.rec-del[data-type="review"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteRecord(no, 'reviews', parseInt(btn.dataset.idx)));
+  });
+}
+
+function deleteRecord(no, type, idx) {
+  const data = loadRecords();
+  if (data[no] && data[no][type]) {
+    data[no][type].splice(idx, 1);
+    saveRecords(data);
+    if (type === 'scores') renderScoreList(no);
+    else renderReviewList(no);
+    rerenderBadges();
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// カードのバッジを再描画（記録後に更新）
+function rerenderBadges() {
+  document.querySelectorAll('.card-record-badge').forEach(el => el.remove());
+  document.querySelectorAll('.card-image-wrap[data-no]').forEach(wrap => {
+    const no = parseInt(wrap.dataset.no);
+    const cnt = getRecordCount(no);
+    if (cnt > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'card-record-badge';
+      badge.textContent = '📝 ' + cnt;
+      wrap.appendChild(badge);
+    }
+  });
+}
+
+// エクスポート
+function exportRecords() {
+  const data = loadRecords();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'bg_records_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// インポート
+function importRecords(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (typeof data !== 'object') throw new Error();
+      saveRecords(data);
+      rerenderBadges();
+      alert('インポートが完了しました。');
+    } catch { alert('ファイルの形式が正しくありません。'); }
+  };
+  reader.readAsText(file);
+}
+
 // ── トースト ──
 function showToast(){
   if(localStorage.getItem('toast_v2'))return;
@@ -683,7 +997,9 @@ function makeCard(g){
     +(hasImg
       ?'<img class="img-loading" alt="'+g.title+'"><div class="card-img-placeholder" style="display:none">'+phSvg()+'<span>画像なし</span></div>'
       :'<div class="card-img-placeholder">'+phSvg()+'<span>画像なし</span></div>')
-    +'<div class="img-zoom-hint">'+zoomSvg()+'</div></div>'
+    +'<div class="img-zoom-hint">'+zoomSvg()+'</div>'
+    +(getRecordCount(g.no)>0?'<div class="card-record-badge">📝 '+getRecordCount(g.no)+'</div>':'')
+    +'</div>'
     +'<div class="card-body">'
     +'<div class="card-header"><div class="card-title">'+g.title+'</div>'
     +'<div class="card-no-wrap">'+favHtml+'<span class="card-no">'+noStr+'</span></div></div>'
