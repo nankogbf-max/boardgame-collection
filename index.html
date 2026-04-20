@@ -467,7 +467,7 @@ function processBggQueue(){
 }
 async function fetchBgg(id){
   try{
-    const res=await fetch('/.netlify/functions/bgg-image?id='+id,
+    const res=await fetch('/bgg-image?id='+id,
       {signal:AbortSignal.timeout?AbortSignal.timeout(25000):undefined});
     if(!res.ok)return'';
     return(await res.json()).url||'';
