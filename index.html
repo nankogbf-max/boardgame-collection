@@ -208,7 +208,31 @@ textarea.lb-input{resize:vertical;min-height:72px}
 .lb-record-note{color:rgba(255,255,255,.55);font-size:11px;margin-top:3px}
 /* カードのバッジ */
 .card-record-badge{position:absolute;top:7px;left:7px;background:rgba(46,170,220,.85);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;pointer-events:none;backdrop-filter:blur(4px)}
+/* ライトボックス左右クリック領域 */
+.lb-zone{position:fixed;top:0;bottom:0;width:72px;z-index:999;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;user-select:none}
+.lb-zone-left{left:0}
+.lb-zone-right{right:0}
+.lb-zone:hover{background:rgba(255,255,255,.07)}
+.lb-zone.wrap-zone{background:rgba(245,158,11,.13)}
+.lb-zone.wrap-zone:hover{background:rgba(245,158,11,.22)}
+.lb-zone-icon{font-size:22px;color:rgba(255,255,255,.18);transition:color .2s;pointer-events:none}
+.lb-zone:hover .lb-zone-icon{color:rgba(255,255,255,.45)}
+.lb-zone.wrap-zone .lb-zone-icon{color:rgba(245,158,11,.55)}
+.lb-zone.wrap-zone:hover .lb-zone-icon{color:rgba(245,158,11,.85)}
+/* ピックアップ機能 */
+.pickup-banner{background:#fff8e1;border-bottom:2px solid #f59e0b;padding:8px 20px;display:none;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#7a5800}
+.pickup-banner.active{display:flex}
+.pickup-banner strong{font-weight:700}
+.pickup-banner-btns{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+.pickup-banner-btn{padding:5px 12px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;border:1px solid rgba(122,88,0,.3);background:rgba(122,88,0,.08);color:#7a5800;transition:background .15s}
+.pickup-banner-btn:hover{background:rgba(122,88,0,.18)}
+.pickup-banner-btn.primary{background:#f59e0b;color:#fff;border-color:#f59e0b}
+.pickup-banner-btn.primary:hover{background:#d97706}
+.card-pickup-badge{position:absolute;top:7px;right:7px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.game-card.pickup-selected{outline:2px solid var(--accent);outline-offset:-2px}
+.pickup-selecting .game-card{cursor:cell}
 /* エクスポート */
+
 .export-bar{display:flex;gap:8px;justify-content:flex-end;padding:14px 32px 0;flex-wrap:wrap}
 .export-btn{padding:5px 12px;border:1px solid var(--border-hover);border-radius:var(--radius);background:var(--surface);font-family:var(--font);font-size:11px;color:var(--text-muted);cursor:pointer;transition:background .15s}
 .export-btn:hover{background:var(--surface2)}
@@ -237,6 +261,8 @@ textarea.lb-input{resize:vertical;min-height:72px}
 </head>
 <body>
 <div class="lb-overlay" id="lbOverlay" role="dialog" aria-modal="true">
+  <div class="lb-zone lb-zone-left" id="lbZoneLeft"><span class="lb-zone-icon">&#8249;</span></div>
+  <div class="lb-zone lb-zone-right" id="lbZoneRight"><span class="lb-zone-icon">&#8250;</span></div>
   <div class="lb-inner" id="lbInner">
     <button class="lb-close" id="lbClose" aria-label="閉じる">&#x2715;</button>
     <div class="lb-nav">
@@ -300,7 +326,7 @@ textarea.lb-input{resize:vertical;min-height:72px}
             </div>
           </div>
         </div>
-        <div class="lb-hint">画像の外側をクリック・Escキーで閉じる</div>
+        <div class="lb-hint">左右の端クリック（スワイプ）でゲーム移動 ／ 外側クリックで閉じる</div>
         <div class="lb-center-hint" id="lbCenterHint"></div>
       </div>
     </div>
@@ -406,6 +432,21 @@ textarea.lb-input{resize:vertical;min-height:72px}
     </div><!-- /controls-collapsible -->
   </div>
 </header>
+<div class="pickup-banner" id="pickupBanner">
+  <span>📌 <strong id="pickupCount">0</strong> 件のゲームを選択中</span>
+  <div class="pickup-banner-btns">
+    <button class="pickup-banner-btn primary" id="pickupShowBtn">このリストを表示</button>
+    <button class="pickup-banner-btn" id="pickupShareBtn">URLをコピー</button>
+    <button class="pickup-banner-btn" id="pickupClearBtn">選択を解除</button>
+  </div>
+</div>
+<div class="pickup-banner" id="pickupViewBanner" style="background:#e8f4fb;border-color:var(--accent);color:#1a5f7a">
+  <span>📌 持ち込みリスト表示中 — <strong id="pickupViewCount">0</strong> 件</span>
+  <div class="pickup-banner-btns">
+    <button class="pickup-banner-btn" id="pickupViewShareBtn" style="border-color:rgba(26,95,122,.3);background:rgba(26,95,122,.08);color:#1a5f7a">URLをコピー</button>
+    <button class="pickup-banner-btn" id="pickupExitBtn" style="border-color:rgba(26,95,122,.3);background:rgba(26,95,122,.08);color:#1a5f7a">全件表示に戻る</button>
+  </div>
+</div>
 <main class="content">
   <div id="galleryView" class="gallery"></div>
   <div id="tableView" class="table-wrap" style="display:none">
@@ -609,18 +650,34 @@ function updateNavHints() {
   const hint  = document.getElementById('lbCenterHint');
   const btnPrev = document.getElementById('lbPrev');
   const btnNext = document.getElementById('lbNext');
+  const zoneL = document.getElementById('lbZoneLeft');
+  const zoneR = document.getElementById('lbZoneRight');
   if (!hint) return;
   const atFirst = (currentLbIndex === 0);
   const atLast  = (currentLbIndex === total - 1);
   if (total <= 1) {
     hint.textContent = '';
-    btnPrev.classList.remove('lb-nav-wrap');
-    btnNext.classList.remove('lb-nav-wrap');
+    [btnPrev, btnNext].forEach(b => b && b.classList.remove('lb-nav-wrap'));
+    [zoneL, zoneR].forEach(z => z && z.classList.remove('wrap-zone'));
     return;
   }
-  if (atLast)  { hint.textContent = '次は最初のゲームです →'; btnNext.classList.add('lb-nav-wrap'); btnPrev.classList.remove('lb-nav-wrap'); }
-  else if (atFirst) { hint.textContent = '← 前は最後のゲームです'; btnPrev.classList.add('lb-nav-wrap'); btnNext.classList.remove('lb-nav-wrap'); }
-  else { hint.textContent = ''; btnPrev.classList.remove('lb-nav-wrap'); btnNext.classList.remove('lb-nav-wrap'); }
+  if (atLast) {
+    hint.textContent = '次は最初のゲームです →';
+    btnNext && btnNext.classList.add('lb-nav-wrap');
+    btnPrev && btnPrev.classList.remove('lb-nav-wrap');
+    zoneR && zoneR.classList.add('wrap-zone');
+    zoneL && zoneL.classList.remove('wrap-zone');
+  } else if (atFirst) {
+    hint.textContent = '← 前は最後のゲームです';
+    btnPrev && btnPrev.classList.add('lb-nav-wrap');
+    btnNext && btnNext.classList.remove('lb-nav-wrap');
+    zoneL && zoneL.classList.add('wrap-zone');
+    zoneR && zoneR.classList.remove('wrap-zone');
+  } else {
+    hint.textContent = '';
+    [btnPrev, btnNext].forEach(b => b && b.classList.remove('lb-nav-wrap'));
+    [zoneL, zoneR].forEach(z => z && z.classList.remove('wrap-zone'));
+  }
 }
 function closeLightbox() {
   lbOverlay.classList.remove('lb-open');
@@ -1023,6 +1080,7 @@ function makeCard(g){
       :'<div class="card-img-placeholder">'+phSvg()+'<span>画像なし</span></div>')
     +'<div class="img-zoom-hint">'+zoomSvg()+'</div>'
     +(getRecordCount(g.no)>0?'<div class="card-record-badge">📝 '+getRecordCount(g.no)+'</div>':'')
+    +(pickupSet.has(g.no)?'<div class="card-pickup-badge">✓</div>':'')
     +'</div>'
     +'<div class="card-body">'
     +'<div class="card-header"><div class="card-title">'+g.title+'</div>'
@@ -1131,6 +1189,193 @@ function setView(v){
   document.getElementById(id).addEventListener(id==='searchInput'?'input':'change',applyAll);
 });
 updateCounts();applyAll();showToast();
+
+// ── ライトボックス左右クリック領域 ──
+(function() {
+  const zoneL = document.getElementById('lbZoneLeft');
+  const zoneR = document.getElementById('lbZoneRight');
+  if (!zoneL || !zoneR) return;
+
+  zoneL.addEventListener('click', e => {
+    if (!lbOverlay.classList.contains('lb-open')) return;
+    e.stopPropagation();
+    openLightboxByIndex(currentLbIndex - 1);
+  });
+  zoneR.addEventListener('click', e => {
+    if (!lbOverlay.classList.contains('lb-open')) return;
+    e.stopPropagation();
+    openLightboxByIndex(currentLbIndex + 1);
+  });
+})();
+
+// ── ピックアップ機能 ──
+(function() {
+  // URLからピックアップNoを読み込む
+  const params = new URLSearchParams(location.search);
+  const pickupParam = params.get('pickup');
+  let pickupViewNos = pickupParam
+    ? pickupParam.split(',').map(Number).filter(n => n > 0)
+    : [];
+  const isPickupView = pickupViewNos.length > 0;
+
+  // ピックアップ選択セット（Ctrl+クリックで操作）
+  window.pickupSet = new Set();
+
+  // ピックアップ表示モードの場合はフィルターを上書き
+  if (isPickupView) {
+    // applyAllを拡張してpickupViewを反映
+    const origApplyAll = window.applyAll || applyAll;
+    const pickupViewSet = new Set(pickupViewNos);
+    const _origFiltered = filtered;
+
+    // ピックアップバナー表示
+    const viewBanner = document.getElementById('pickupViewBanner');
+    const viewCount  = document.getElementById('pickupViewCount');
+    if (viewBanner) {
+      viewBanner.classList.add('active');
+      viewCount.textContent = pickupViewNos.length;
+    }
+
+    // applyAllをラップして結果をpickupViewNoでフィルター
+    const _realApplyAll = applyAll;
+    window.applyAll = function() {
+      _realApplyAll();
+      filtered = filtered.filter(g => pickupViewSet.has(g.no));
+      document.getElementById('resultCount').textContent = filtered.length + ' 件';
+      document.getElementById('emptyMsg').style.display = filtered.length === 0 ? 'block' : 'none';
+      if (currentView === 'gallery') renderGallery(); else renderTable();
+    };
+    applyAll();
+  }
+
+  // 選択バナー要素
+  const banner     = document.getElementById('pickupBanner');
+  const countEl    = document.getElementById('pickupCount');
+  const showBtn    = document.getElementById('pickupShowBtn');
+  const shareBtn   = document.getElementById('pickupShareBtn');
+  const clearBtn   = document.getElementById('pickupClearBtn');
+  const exitBtn    = document.getElementById('pickupExitBtn');
+  const viewShareBtn = document.getElementById('pickupViewShareBtn');
+
+  function updateBanner() {
+    if (!banner) return;
+    const cnt = pickupSet.size;
+    banner.classList.toggle('active', cnt > 0);
+    if (countEl) countEl.textContent = cnt;
+  }
+
+  function getPickupUrl(nos) {
+    const url = new URL(location.href);
+    url.searchParams.set('pickup', [...nos].join(','));
+    return url.toString();
+  }
+
+  async function copyUrl(url) {
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('URLをコピーしました！
+' + url);
+    } catch {
+      prompt('このURLをコピーしてください:', url);
+    }
+  }
+
+  // ピックアップ選択：Ctrl+クリック（PC）
+  document.addEventListener('click', e => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    const card = e.target.closest('.game-card');
+    if (!card) return;
+    e.preventDefault();
+    const wrap = card.querySelector('.card-image-wrap');
+    if (!wrap) return;
+    const no = parseInt(wrap.dataset.no);
+    if (!no) return;
+    if (pickupSet.has(no)) pickupSet.delete(no);
+    else pickupSet.add(no);
+    card.classList.toggle('pickup-selected', pickupSet.has(no));
+    // バッジ更新
+    const badge = card.querySelector('.card-pickup-badge');
+    if (pickupSet.has(no)) {
+      if (!badge) {
+        const b = document.createElement('div');
+        b.className = 'card-pickup-badge';
+        b.textContent = '✓';
+        wrap.appendChild(b);
+      }
+    } else {
+      if (badge) badge.remove();
+    }
+    updateBanner();
+  });
+
+  // ピックアップ選択：長押し（スマホ）
+  let longPressTimer = null;
+  document.addEventListener('touchstart', e => {
+    const card = e.target.closest('.game-card');
+    if (!card) return;
+    longPressTimer = setTimeout(() => {
+      const wrap = card.querySelector('.card-image-wrap');
+      if (!wrap) return;
+      const no = parseInt(wrap.dataset.no);
+      if (!no) return;
+      if (pickupSet.has(no)) pickupSet.delete(no);
+      else pickupSet.add(no);
+      card.classList.toggle('pickup-selected', pickupSet.has(no));
+      const badge = card.querySelector('.card-pickup-badge');
+      if (pickupSet.has(no)) {
+        if (!badge) {
+          const b = document.createElement('div');
+          b.className = 'card-pickup-badge';
+          b.textContent = '✓';
+          wrap.appendChild(b);
+        }
+      } else {
+        if (badge) badge.remove();
+      }
+      updateBanner();
+      // バイブレーション（対応端末）
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 500);
+  }, { passive: true });
+  document.addEventListener('touchend', () => {
+    clearTimeout(longPressTimer);
+  }, { passive: true });
+  document.addEventListener('touchmove', () => {
+    clearTimeout(longPressTimer);
+  }, { passive: true });
+
+  // 「このリストを表示」
+  if (showBtn) showBtn.addEventListener('click', () => {
+    if (!pickupSet.size) return;
+    location.href = getPickupUrl(pickupSet);
+  });
+
+  // 「URLをコピー」（選択中）
+  if (shareBtn) shareBtn.addEventListener('click', () => {
+    if (!pickupSet.size) return;
+    copyUrl(getPickupUrl(pickupSet));
+  });
+
+  // 「選択を解除」
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    pickupSet.clear();
+    document.querySelectorAll('.game-card.pickup-selected').forEach(c => c.classList.remove('pickup-selected'));
+    document.querySelectorAll('.card-pickup-badge').forEach(b => b.remove());
+    updateBanner();
+  });
+
+  // 「全件表示に戻る」
+  if (exitBtn) exitBtn.addEventListener('click', () => {
+    const url = new URL(location.href);
+    url.searchParams.delete('pickup');
+    location.href = url.toString();
+  });
+
+  // 「URLをコピー」（表示中）
+  if (viewShareBtn) viewShareBtn.addEventListener('click', () => {
+    copyUrl(location.href);
+  });
+})();
 
 // ── スワイプ対応（ゲーム情報タブのみ有効） ──
 (function() {
