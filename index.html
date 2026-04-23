@@ -994,18 +994,34 @@ function applyAll(){
   const tr=document.getElementById('filterTime').value;
   const genre=document.getElementById('filterGenre').value;
   const sk=document.getElementById('sortKey').value;
+  // 「◯◯分」「◯◯人」パターンを事前に抽出
+  const qMinMatch=q.match(/^(\d+)\s*分$/);
+  const qPersonMatch=q.match(/^(\d+)\s*人$/);
+  const qMinVal=qMinMatch?parseInt(qMinMatch[1]):null;
+  const qPersonVal=qPersonMatch?parseInt(qPersonMatch[1]):null;
+
   filtered=GAMES.filter(g=>{
     if(q){
-      const searchTarget=[
-        g.title,
-        g.genre.join(' '),
-        g.intro||'',
-        g.cat||'',
-        g.diff||'',
-        g.time||'',
-        (g.min!=null&&g.max!=null)?playerStr(g.min,g.max):'',
-      ].join(' ').toLowerCase();
-      if(!searchTarget.includes(q))return false;
+      // 「◯◯分」→ プレイ時間の範囲に含まれるか
+      if(qMinVal!==null){
+        const mn=timeToMin(g.time),mx=timeToMax(g.time);
+        if(mx===0||qMinVal<mn||qMinVal>mx)return false;
+      // 「◯◯人」→ プレイ人数の範囲に含まれるか
+      } else if(qPersonVal!==null){
+        if(g.min==null||g.max==null||qPersonVal<g.min||qPersonVal>g.max)return false;
+      // それ以外 → テキスト全文検索
+      } else {
+        const searchTarget=[
+          g.title,
+          g.genre.join(' '),
+          g.intro||'',
+          g.cat||'',
+          g.diff||'',
+          g.time||'',
+          (g.min!=null&&g.max!=null)?playerStr(g.min,g.max):'',
+        ].join(' ').toLowerCase();
+        if(!searchTarget.includes(q))return false;
+      }
     }
     if(cat&&g.cat!==cat)return false;
     if(diff&&g.diff!==diff)return false;
