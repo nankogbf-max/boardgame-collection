@@ -995,7 +995,18 @@ function applyAll(){
   const genre=document.getElementById('filterGenre').value;
   const sk=document.getElementById('sortKey').value;
   filtered=GAMES.filter(g=>{
-    if(q&&!g.title.toLowerCase().includes(q)&&!g.genre.join(' ').toLowerCase().includes(q))return false;
+    if(q){
+      const searchTarget=[
+        g.title,
+        g.genre.join(' '),
+        g.intro||'',
+        g.cat||'',
+        g.diff||'',
+        g.time||'',
+        (g.min!=null&&g.max!=null)?playerStr(g.min,g.max):'',
+      ].join(' ').toLowerCase();
+      if(!searchTarget.includes(q))return false;
+    }
     if(cat&&g.cat!==cat)return false;
     if(diff&&g.diff!==diff)return false;
     if(players){
